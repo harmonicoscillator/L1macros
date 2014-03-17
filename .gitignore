@@ -1,0 +1,12 @@
+CVS
+
+*_C.d
+*.so
+*.exe
+
+*.root
+*.log
+*.out
+
+*.pdf
+*.gif
