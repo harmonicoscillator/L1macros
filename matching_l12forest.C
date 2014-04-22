@@ -13,25 +13,32 @@
 #include <TGraphAsymmErrors.h>
 
 #include <vector>
+//#include <TMap.h>
 #include <map>
 
 using namespace std;
-#include "test.h"
-#include "test2.h"
+#include "l1ExtraTree.h"
+#include "l1Tree.h"
 
 const Double_t L1_THRESHOLD = 30;
 
+long makeKey(long run, long lumi, long event){
+  return (10000000000*run + 10000000*lumi + event);
+}
+
 void matching_l12forest()
 {
-  const TString l1_input = "/export/d00/scratch/luck/L1Tree_minbias_chunk1.root";
+  //const TString l1_input = "/export/d00/scratch/luck/L1Tree_minbias_chunk1.root";
+  const TString l1_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/L1Tree_MinBiasSkim_v1.root";
   TFile *lFile = TFile::Open(l1_input);
   TTree *lTree = (TTree*)lFile->Get("l1ExtraTreeProducer/L1ExtraTree");
   TTree *lEvtTree = (TTree*)lFile->Get("l1NtupleProducer/L1Tree");
 
-  test *l1extra = new test(lTree);
-  test2 *l1 = new test2(lEvtTree);
+  l1ExtraTree *l1extra = new l1ExtraTree(lTree);
+  l1Tree *l1 = new l1Tree(lEvtTree);
 
-  const TString forest_input = "/mnt/hadoop/cms/store/user/velicanu/HIMinBias2011_GR_R_53_LV6_CMSSW_5_3_16_Forest_Track8_Jet21/0.root";
+  //const TString forest_input = "/mnt/hadoop/cms/store/user/velicanu/HIMinBias2011_GR_R_53_LV6_CMSSW_5_3_16_Forest_Track8_Jet21/0.root";
+  const TString forest_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/minbiasForest_merged/0.root";
   TFile *fFile = TFile::Open(forest_input);
   TTree *fTree = (TTree*)fFile->Get("akVs3PFJetAnalyzer/t");
   TTree *fEvtTree = (TTree*)fFile->Get("hiEvtAnalyzer/HiTree");
@@ -51,15 +58,37 @@ void matching_l12forest()
 
   TFile *outFile = new TFile("hist_out.root","RECREATE");
 
-  map<long,int> kmap;// = new unordered_map<long,int>();
-  int f_entries = fTree->GetEntries();
-  for(int j = 0; j < f_entries; ++j)
+  map<long, int> kmap;
+  //TMap *kmap = new TMap();// = new unordered_map<long,int>();
+  // choose loop over forest firest
+  // int f_entries = fTree->GetEntries();
+  // for(int j = 0; j < f_entries; ++j)
+  // {
+  //   fTree->GetEntry(j);
+  //   long key = 10000000000*f_run + 10000000*f_lumi + f_evt;
+  //   pair<long,int> p(key,j);
+  //   kmap.insert(p);
+  // }
+  // choose loop over l1 tree first (smaller)
+  int l_entries = lEvtTree->GetEntries();
+  for(long j = 0; j < l_entries; ++j)
   {
-    fTree->GetEntry(j);
-    long key = 10000000000*f_run + 10000000*f_lumi + f_evt;
+    if(j % 1000 == 0)
+      printf("%ld / %d\n",j,l_entries);
+
+    l1->GetEntry(j);
+    int l1_evt = l1->event;
+    int l1_run = l1->run;
+    int l1_lumi = l1->lumi;
+    long key = makeKey(l1_run, l1_lumi, l1_evt);
+
     pair<long,int> p(key,j);
     kmap.insert(p);
+    //kmap->Add(&key,&j);
+    if(j > 5000) break;
   }
+
+  //outFile->cd();
 
   const int nBins = 75;
   const double maxPt = 150;
@@ -72,30 +101,44 @@ void matching_l12forest()
   int count = 0;
 
   int entries = lTree->GetEntries();
-  for(int j = 0; j < entries; ++j)
+  for(long j = 0; j < entries; ++j)
   {
-    l1->GetEntry(j);
+    if(j % 1000 == 0)
+      printf("%ld / %d\n",j,entries);
 
-    int l1_evt = l1->event;
-    int l1_run = l1->run;
-    int l1_lumi = l1->lumi;
-    long key = 10000000000*l1_run + 10000000*l1_lumi + l1_evt;
+    //l1->GetEntry(j);
+    fTree->GetEntry(j);
+    long key = makeKey(f_run, f_lumi, f_evt);
 
+    // int l1_evt = l1->event;
+    // int l1_run = l1->run;
+    // int l1_lumi = l1->lumi;
+    // long key = 10000000000*l1_run + 10000000*l1_lumi + l1_evt;
+
+    // long *k = (long *)kmap->GetValue(&key);
+    // if(k = 0){
     map<long,int>::const_iterator got = kmap.find(key);
     if(got == kmap.end() ) {
       continue;
     } else {
-      fTree->GetEntry(got->second);
-      // if(l1_evt != f_evt)
-      // {
-      // 	printf("ERROR: not actually the same event");
-      // 	exit(1);
-      // }
-      l1extra->GetEntry(j);
+      // fTree->GetEntry(got->second);
+      // l1extra->GetEntry(j);
 
-      //double maxl1pt = TMath::Max(l1extra->cenJetEt[0],l1extra->fwdJetEt[0]);
+      l1->GetEntry(got->second);
+      l1extra->GetEntry(got->second);
+      //l1extra->GetEntry(*k);
+
+      if(l1->event != f_evt)
+      {
+      	printf("ERROR: not actually the same event");
+      	exit(1);
+      }
+
+
+      printf("%d \n",(int)l1extra->cenJetEt.size());
+      double maxl1pt = TMath::Max(l1extra->cenJetEt[0],l1extra->fwdJetEt[0]);
       //double maxl1pt = l1extra->cenJetEt[0];
-      double maxl1pt = l1extra->fwdJetEt[0];
+      //double maxl1pt = l1extra->fwdJetEt[0];
 
       l1JetPt->Fill(maxl1pt);
       fJetPt->Fill(jtpt[0]);
@@ -126,6 +169,7 @@ void matching_l12forest()
   // TCanvas *c3 = new TCanvas();
   // a->Draw("p A");
 
+  //outFile->cd();
   l1JetPt->Write();
   fJetPt->Write();
   corr->Write();

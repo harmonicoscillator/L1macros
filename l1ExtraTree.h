@@ -1,12 +1,12 @@
 //////////////////////////////////////////////////////////
 // This class has been automatically generated on
-// Mon Apr 14 10:47:55 2014 by ROOT version 5.34/10
+// Tue Apr 22 14:13:24 2014 by ROOT version 5.34/10
 // from TTree L1ExtraTree/L1ExtraTree
-// found on file: /export/d00/scratch/luck/L1Tree_minbias_chunk1.root
+// found on file: /mnt/hadoop/cms/store/user/luck/L1Emulator/L1Tree_MinBiasSkim_v1.root
 //////////////////////////////////////////////////////////
 
-#ifndef test_h
-#define test_h
+#ifndef l1ExtraTree_h
+#define l1ExtraTree_h
 
 #include <TROOT.h>
 #include <TChain.h>
@@ -16,7 +16,7 @@
 
 // Fixed size dimensions of array or collections stored in the TTree if any.
 
-class test {
+class l1ExtraTree {
 public :
    TTree          *fChain;   //!pointer to the analyzed TTree or TChain
    Int_t           fCurrent; //!current Tree number in a TChain
@@ -124,8 +124,8 @@ public :
    TBranch        *b_L1Extra_mhtPhi;   //!
    TBranch        *b_L1Extra_mhtBx;   //!
 
-   test(TTree *tree=0);
-   virtual ~test();
+   l1ExtraTree(TTree *tree=0);
+   virtual ~l1ExtraTree();
    //virtual Int_t    Cut(Long64_t entry);
    virtual Int_t    GetEntry(Long64_t entry);
    virtual Long64_t LoadTree(Long64_t entry);
@@ -137,36 +137,36 @@ public :
 
 #endif
 
-//#ifdef test_cxx
-test::test(TTree *tree) : fChain(0)
+//#ifdef l1ExtraTree_cxx
+l1ExtraTree::l1ExtraTree(TTree *tree) : fChain(0)
 {
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
    if (tree == 0) {
-      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("/export/d00/scratch/luck/L1Tree_minbias_chunk1.root");
+      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("/mnt/hadoop/cms/store/user/luck/L1Emulator/L1Tree_MinBiasSkim_v1.root");
       if (!f || !f->IsOpen()) {
-         f = new TFile("/export/d00/scratch/luck/L1Tree_minbias_chunk1.root");
+         f = new TFile("/mnt/hadoop/cms/store/user/luck/L1Emulator/L1Tree_MinBiasSkim_v1.root");
       }
-      TDirectory * dir = (TDirectory*)f->Get("/export/d00/scratch/luck/L1Tree_minbias_chunk1.root:/l1ExtraTreeProducer");
+      TDirectory * dir = (TDirectory*)f->Get("/mnt/hadoop/cms/store/user/luck/L1Emulator/L1Tree_MinBiasSkim_v1.root:/l1ExtraTreeProducer");
       dir->GetObject("L1ExtraTree",tree);
 
    }
    Init(tree);
 }
 
-test::~test()
+l1ExtraTree::~l1ExtraTree()
 {
    if (!fChain) return;
    delete fChain->GetCurrentFile();
 }
 
-Int_t test::GetEntry(Long64_t entry)
+Int_t l1ExtraTree::GetEntry(Long64_t entry)
 {
 // Read contents of entry.
    if (!fChain) return 0;
    return fChain->GetEntry(entry);
 }
-Long64_t test::LoadTree(Long64_t entry)
+Long64_t l1ExtraTree::LoadTree(Long64_t entry)
 {
 // Set the environment to read one entry
    if (!fChain) return -5;
@@ -179,7 +179,7 @@ Long64_t test::LoadTree(Long64_t entry)
    return centry;
 }
 
-void test::Init(TTree *tree)
+void l1ExtraTree::Init(TTree *tree)
 {
    // The Init() function is called when the selector needs to initialize
    // a new tree or chain. Typically here the branch addresses and branch
@@ -247,7 +247,7 @@ void test::Init(TTree *tree)
    Notify();
 }
 
-Bool_t test::Notify()
+Bool_t l1ExtraTree::Notify()
 {
    // The Notify() function is called when a new file is opened. This
    // can be either for a new TTree in a TChain or when when a new TTree
@@ -258,18 +258,18 @@ Bool_t test::Notify()
    return kTRUE;
 }
 
-void test::Show(Long64_t entry)
+void l1ExtraTree::Show(Long64_t entry)
 {
 // Print contents of entry.
 // If entry is not specified, print current entry
    if (!fChain) return;
    fChain->Show(entry);
 }
-/* Int_t test::Cut(Long64_t entry) */
+/* Int_t l1ExtraTree::Cut(Long64_t entry) */
 /* { */
 /* // This function may be called from Loop. */
 /* // returns  1 if entry is accepted. */
 /* // returns -1 otherwise. */
 /*    return 1; */
 /* } */
-//#endif // #ifdef test_cxx
+//#endif // #ifdef l1ExtraTree_cxx
