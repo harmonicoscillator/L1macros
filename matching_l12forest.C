@@ -20,7 +20,7 @@ using namespace std;
 #include "l1ExtraTree.h"
 #include "l1Tree.h"
 
-const Double_t L1_THRESHOLD = 30;
+const Double_t L1_THRESHOLD[4] = {0,15,30,60};
 
 long makeKey(long run, long lumi, long event){
   return (10000000000*run + 10000000*lumi + event);
@@ -40,14 +40,20 @@ void matching_l12forest()
   //const TString forest_input = "/mnt/hadoop/cms/store/user/velicanu/HIMinBias2011_GR_R_53_LV6_CMSSW_5_3_16_Forest_Track8_Jet21/0.root";
   const TString forest_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/minbiasForest_merged/0.root";
   TFile *fFile = TFile::Open(forest_input);
-  TTree *fTree = (TTree*)fFile->Get("akVs3PFJetAnalyzer/t");
+  TTree *fTree = (TTree*)fFile->Get("akVs3CaloJetAnalyzer/t");
   TTree *fEvtTree = (TTree*)fFile->Get("hiEvtAnalyzer/HiTree");
   fTree->AddFriend(fEvtTree);
+  TTree *fSkimTree = (TTree*)fFile->Get("skimanalysis/HltTree");
+  fTree->AddFriend(fSkimTree);
 
   Int_t f_evt, f_run, f_lumi;
   fTree->SetBranchAddress("evt",&f_evt);
   fTree->SetBranchAddress("run",&f_run);
   fTree->SetBranchAddress("lumi",&f_lumi);
+
+  Int_t pcollisionEventSelection, pHBHENoiseFilter;
+  fTree->SetBranchAddress("pcollisionEventSelection",&pcollisionEventSelection);
+  fTree->SetBranchAddress("pHBHENoiseFilter",&pHBHENoiseFilter);
 
   Int_t nref;
   Float_t jtpt[500], jteta[500], jtphi[500];
@@ -56,10 +62,9 @@ void matching_l12forest()
   fTree->SetBranchAddress("jteta",jteta);
   fTree->SetBranchAddress("jtphi",jtphi);
 
-  TFile *outFile = new TFile("hist_out.root","RECREATE");
+  TFile *outFile = new TFile("hist_out_akVs3Calo.root","RECREATE");
 
   map<long, int> kmap;
-  //TMap *kmap = new TMap();// = new unordered_map<long,int>();
   // choose loop over forest firest
   // int f_entries = fTree->GetEntries();
   // for(int j = 0; j < f_entries; ++j)
@@ -69,54 +74,47 @@ void matching_l12forest()
   //   pair<long,int> p(key,j);
   //   kmap.insert(p);
   // }
+
   // choose loop over l1 tree first (smaller)
   int l_entries = lEvtTree->GetEntries();
   for(long j = 0; j < l_entries; ++j)
   {
-    if(j % 1000 == 0)
-      printf("%ld / %d\n",j,l_entries);
+    // if(j % 1000 == 0)
+    //   printf("%ld / %d\n",j,l_entries);
 
     l1->GetEntry(j);
-    int l1_evt = l1->event;
-    int l1_run = l1->run;
-    int l1_lumi = l1->lumi;
-    long key = makeKey(l1_run, l1_lumi, l1_evt);
+    long key = makeKey(l1->run, l1->lumi, l1->event);
 
     pair<long,int> p(key,j);
     kmap.insert(p);
-    //kmap->Add(&key,&j);
-    if(j > 5000) break;
   }
 
-  //outFile->cd();
+  outFile->cd();
 
   const int nBins = 75;
   const double maxPt = 150;
 
   TH1D *l1JetPt = new TH1D("l1JetPt",";L1 Jet p_{T} (GeV)",nBins,0,maxPt);
-  TH1D *fJetPt = new TH1D("fJetPt",";akVs3PF Jet p_{T}",nBins,0,maxPt);
-  TH1D *accepted = new TH1D("accepted",";akVsPF Jet p_{T}",nBins,0,maxPt);
+  TH1D *fJetPt = new TH1D("fJetPt",";offline Jet p_{T}",nBins,0,maxPt);
+  TH1D *accepted[4];
+  accepted[0] = new TH1D("accepted_pt0",";offline Jet p_{T}",nBins,0,maxPt);
+  accepted[1] = (TH1D*)accepted[0]->Clone("accepted_pt15");
+  accepted[2] = (TH1D*)accepted[0]->Clone("accepted_pt30");
+  accepted[3] = (TH1D*)accepted[0]->Clone("accepted_pt60");
   TH2D *corr = new TH2D("corr","akVs pt;l1 pt",nBins,0,maxPt,nBins,0,maxPt);
 
   int count = 0;
 
-  int entries = lTree->GetEntries();
+  int entries = fTree->GetEntries();
   for(long j = 0; j < entries; ++j)
   {
-    if(j % 1000 == 0)
+    if(j % 10000 == 0)
       printf("%ld / %d\n",j,entries);
 
     //l1->GetEntry(j);
     fTree->GetEntry(j);
     long key = makeKey(f_run, f_lumi, f_evt);
 
-    // int l1_evt = l1->event;
-    // int l1_run = l1->run;
-    // int l1_lumi = l1->lumi;
-    // long key = 10000000000*l1_run + 10000000*l1_lumi + l1_evt;
-
-    // long *k = (long *)kmap->GetValue(&key);
-    // if(k = 0){
     map<long,int>::const_iterator got = kmap.find(key);
     if(got == kmap.end() ) {
       continue;
@@ -124,30 +122,44 @@ void matching_l12forest()
       // fTree->GetEntry(got->second);
       // l1extra->GetEntry(j);
 
-      l1->GetEntry(got->second);
+      //l1->GetEntry(got->second);
       l1extra->GetEntry(got->second);
       //l1extra->GetEntry(*k);
 
-      if(l1->event != f_evt)
-      {
-      	printf("ERROR: not actually the same event");
-      	exit(1);
-      }
+      // if(l1->event != f_evt)
+      // {
+      // 	printf("ERROR: not actually the same event");
+      // 	exit(1);
+      // }
 
+      double maxCenJetEt = 0;
+      if(l1extra->nCenJets != 0)
+	maxCenJetEt = l1extra->cenJetEt[0];
+      double maxFwdJetEt = 0;
+      if(l1extra->nFwdJets != 0)
+	maxFwdJetEt = l1extra->fwdJetEt[0];
 
-      printf("%d \n",(int)l1extra->cenJetEt.size());
-      double maxl1pt = TMath::Max(l1extra->cenJetEt[0],l1extra->fwdJetEt[0]);
+      double maxl1pt = TMath::Max(maxCenJetEt, maxFwdJetEt);
       //double maxl1pt = l1extra->cenJetEt[0];
       //double maxl1pt = l1extra->fwdJetEt[0];
 
+      double maxjtpt = 0;
+      if(nref > 0)
+	maxjtpt = jtpt[0];
+
       l1JetPt->Fill(maxl1pt);
-      fJetPt->Fill(jtpt[0]);
-      corr->Fill(jtpt[0],maxl1pt);
+      if((pcollisionEventSelection == 1) && (pHBHENoiseFilter == 1))
+      {
+	fJetPt->Fill(maxjtpt);
+	corr->Fill(maxjtpt,maxl1pt);
 
+	for(int k = 0; k < 4; ++k){
+	  if(maxl1pt>L1_THRESHOLD[k])
+	    accepted[k]->Fill(maxjtpt);
+	}
+
+      }
       count++;
-
-      if(maxl1pt>L1_THRESHOLD)
-	accepted->Fill(jtpt[0]);
     }
 
     // for(std::vector<double>::const_iterator it = l1extra->cenJetEt.begin(); it != l1extra->cenJetEt.end(); ++it)
@@ -158,9 +170,15 @@ void matching_l12forest()
     //if(j > 10) break;
   }
 
-  TGraphAsymmErrors *a = new TGraphAsymmErrors();
-  a->SetName("asymm");
-  a->BayesDivide(accepted,fJetPt);
+  TGraphAsymmErrors *a[4];
+  for(int k = 0; k < 4; ++k){
+    a[k] = new TGraphAsymmErrors();
+    a[k]->BayesDivide(accepted[k],fJetPt);
+  }
+  a[0]->SetName("asymm_pt_0");
+  a[1]->SetName("asymm_pt_15");
+  a[2]->SetName("asymm_pt_30");
+  a[3]->SetName("asymm_pt_60");
 
   // TCanvas *c1 = new TCanvas();
   // l1JetPt->Draw();
@@ -173,8 +191,10 @@ void matching_l12forest()
   l1JetPt->Write();
   fJetPt->Write();
   corr->Write();
-  accepted->Write();
-  a->Write();
+  for(int k = 0; k < 4; ++k){
+    accepted[k]->Write();
+    a[k]->Write();
+  }
 
   printf("Matching entries: %d\n",count);
 
