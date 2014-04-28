@@ -4,9 +4,9 @@
 #include <TGraphAsymmErrors.h>
 #include <TLegend.h>
 
-void makePrettyTurnOn()
+void makePrettyTurnOn_tracks()
 {
-  TFile *inFile = TFile::Open("hist_out_akPu3Calo.root");
+  TFile *inFile = TFile::Open("hist_out_tracks.root");
   TGraphAsymmErrors *asymm_pt_0_cen = (TGraphAsymmErrors*)inFile->Get("asymm_pt_0_cen");
   TGraphAsymmErrors *asymm_pt_15_cen = (TGraphAsymmErrors*)inFile->Get("asymm_pt_15_cen");
   TGraphAsymmErrors *asymm_pt_30_cen = (TGraphAsymmErrors*)inFile->Get("asymm_pt_30_cen");
@@ -25,7 +25,7 @@ void makePrettyTurnOn()
   asymm_pt_30_cen->SetLineColor(kRed);
   asymm_pt_60_cen->SetMarkerColor(kOrange);
   asymm_pt_60_cen->SetLineColor(kOrange);
-  
+
   asymm_pt_0_periph->SetMarkerColor(1);
   asymm_pt_0_periph->SetLineColor(1);
   asymm_pt_15_periph->SetMarkerColor(kBlue);
@@ -39,12 +39,12 @@ void makePrettyTurnOn()
   asymm_pt_15_periph->SetMarkerStyle(24);
   asymm_pt_30_periph->SetMarkerStyle(24);
   asymm_pt_60_periph->SetMarkerStyle(24);
-  
-  
-  const int nBins = 100;
-  const double maxPt = 200;
 
-  TH1D *hEmpty = new TH1D("hEmpty",";akPu3Calo Jet p_{T} (GeV);Efficiency",nBins,10,maxPt);
+
+  const int nBins = 100;
+  const double maxPt = 120;
+
+  TH1D *hEmpty = new TH1D("hEmpty",";Offline max track p_{T} (GeV);Efficiency",nBins,10,maxPt);
 
   TCanvas *c1 = new TCanvas();
   hEmpty->SetMinimum(0);
@@ -78,12 +78,12 @@ void makePrettyTurnOn()
 
   leg->Draw();
 
-  c1->SaveAs("minbiasHI_turnon_hisub.pdf");
+  c1->SaveAs("minbiasHI_trkturnon_hisub.pdf");
 
 }
 
 int main()
 {
-  makePrettyTurnOn();
+  makePrettyTurnOn_tracks();
   return 0;
 }

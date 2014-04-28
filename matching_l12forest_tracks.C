@@ -40,7 +40,7 @@ void matching_l12forest()
   //const TString forest_input = "/mnt/hadoop/cms/store/user/velicanu/HIMinBias2011_GR_R_53_LV6_CMSSW_5_3_16_Forest_Track8_Jet21/0.root";
   const TString forest_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/minbiasForest_merged/0.root";
   TFile *fFile = TFile::Open(forest_input);
-  TTree *fTree = (TTree*)fFile->Get("akPu3CaloJetAnalyzer/t");
+  TTree *fTree = (TTree*)fFile->Get("anaTrack/trackTree");
   TTree *fEvtTree = (TTree*)fFile->Get("hiEvtAnalyzer/HiTree");
   fTree->AddFriend(fEvtTree);
   TTree *fSkimTree = (TTree*)fFile->Get("skimanalysis/HltTree");
@@ -56,33 +56,27 @@ void matching_l12forest()
   fTree->SetBranchAddress("pcollisionEventSelection",&pcollisionEventSelection);
   fTree->SetBranchAddress("pHBHENoiseFilter",&pHBHENoiseFilter);
 
-  Int_t nref;
-  Float_t jtpt[500], jteta[500], jtphi[500];
-  fTree->SetBranchAddress("nref",&nref);
-  fTree->SetBranchAddress("jtpt",jtpt);
-  fTree->SetBranchAddress("jteta",jteta);
-  fTree->SetBranchAddress("jtphi",jtphi);
+  const unsigned int MAXTRACKS = 20000;
+  Int_t nTrk;
+  Float_t trkPt[MAXTRACKS], trkPtError[MAXTRACKS];
+  Bool_t highPurity[MAXTRACKS];
+  Float_t trkDxy1[MAXTRACKS], trkDxyError1[MAXTRACKS], trkDz1[MAXTRACKS], trkDzError1[MAXTRACKS];
 
-  TFile *outFile = new TFile("hist_out_akPu3Calo_cleaned.root","RECREATE");
+  fTree->SetBranchAddress("nTrk",&nTrk);
+  fTree->SetBranchAddress("trkPt",trkPt);
+  fTree->SetBranchAddress("trkPtError",trkPtError);
+  fTree->SetBranchAddress("highPurity",highPurity);
+  fTree->SetBranchAddress("trkDxy1",trkDxy1);
+  fTree->SetBranchAddress("trkDxyError1",trkDxyError1);
+  fTree->SetBranchAddress("trkDz1",trkDz1);
+  fTree->SetBranchAddress("trkDzError1",trkDzError1);
+
+  TFile *outFile = new TFile("hist_out_tracks.root","RECREATE");
 
   map<long, int> kmap;
-  // choose loop over forest firest
-  // int f_entries = fTree->GetEntries();
-  // for(int j = 0; j < f_entries; ++j)
-  // {
-  //   fTree->GetEntry(j);
-  //   long key = 10000000000*f_run + 10000000*f_lumi + f_evt;
-  //   pair<long,int> p(key,j);
-  //   kmap.insert(p);
-  // }
-
-  // choose loop over l1 tree first (smaller)
   int l_entries = lEvtTree->GetEntries();
   for(long j = 0; j < l_entries; ++j)
   {
-    // if(j % 1000 == 0)
-    //   printf("%ld / %d\n",j,l_entries);
-
     l1->GetEntry(j);
     long key = makeKey(l1->run, l1->lumi, l1->event);
 
@@ -95,19 +89,19 @@ void matching_l12forest()
   const int nBins = 150;
   const double maxPt = 300;
 
-  TH1D *l1JetPt = new TH1D("l1JetPt",";L1 Jet p_{T} (GeV)",nBins,0,maxPt);
-  TH1D *fJetPt[2];
-  fJetPt[0] = new TH1D("fJetPt_cen",";offline Jet p_{T}",nBins,0,maxPt);
-  fJetPt[1] = (TH1D*)fJetPt[0]->Clone("fJetPt_periph");
+  TH1D *l1TrkPt = new TH1D("l1TrkPt",";L1 Trk p_{T} (GeV)",nBins,0,maxPt);
+  TH1D *fTrkPt[2];
+  fTrkPt[0] = new TH1D("fTrkPt_cen",";offline Trk p_{T}",nBins,0,maxPt);
+  fTrkPt[1] = (TH1D*)fTrkPt[0]->Clone("fTrkPt_periph");
   TH1D *accepted[4][2];
-  accepted[0][0] = new TH1D("accepted_pt0_cen",";offline Jet p_{T}",nBins,0,maxPt);
+  accepted[0][0] = new TH1D("accepted_pt0_cen",";offline Trk p_{T}",nBins,0,maxPt);
   accepted[1][0] = (TH1D*)accepted[0][0]->Clone("accepted_pt15_cen");
   accepted[2][0] = (TH1D*)accepted[0][0]->Clone("accepted_pt30_cen");
   accepted[3][0] = (TH1D*)accepted[0][0]->Clone("accepted_pt60_cen");
   accepted[0][1] = (TH1D*)accepted[0][0]->Clone("accepted_pt0_periph");
   accepted[1][1] = (TH1D*)accepted[0][0]->Clone("accepted_pt15_periph");
   accepted[2][1] = (TH1D*)accepted[0][0]->Clone("accepted_pt30_periph");
-  accepted[3][1] = (TH1D*)accepted[0][0]->Clone("accepted_pt60_periph");  
+  accepted[3][1] = (TH1D*)accepted[0][0]->Clone("accepted_pt60_periph");
   TH2D *corr = new TH2D("corr","pt;l1 pt",nBins,0,maxPt,nBins,0,maxPt);
 
   int count = 0;
@@ -118,7 +112,6 @@ void matching_l12forest()
     if(j % 10000 == 0)
       printf("%ld / %d\n",j,entries);
 
-    //l1->GetEntry(j);
     fTree->GetEntry(j);
     long key = makeKey(f_run, f_lumi, f_evt);
 
@@ -126,52 +119,45 @@ void matching_l12forest()
     if(got == kmap.end() ) {
       continue;
     } else {
-      // fTree->GetEntry(got->second);
-      // l1extra->GetEntry(j);
-
-      //l1->GetEntry(got->second);
       l1extra->GetEntry(got->second);
       kmap.erase(key);
-      //l1extra->GetEntry(*k);
 
-      // if(l1->event != f_evt)
-      // {
-      // 	printf("ERROR: not actually the same event");
-      // 	exit(1);
-      // }
+      Float_t maxl1pt = 0;
+      if(l1extra->nTauJets > 0)
+	maxl1pt = l1extra->tauJetEt[0];
 
-      double maxCenJetEt = 0;
-      if(l1extra->nCenJets != 0)
-	maxCenJetEt = l1extra->cenJetEt[0];
-      double maxFwdJetEt = 0;
-      if(l1extra->nFwdJets != 0)
-	maxFwdJetEt = l1extra->fwdJetEt[0];
+      Float_t maxtrkpt = 0;
+      for(int i = 0; i < nTrk; ++i)
+      {
+	bool goodTrack = (highPurity[i] &&
+			  TMath::Abs(trkDz1[i]/trkDzError1[i]) < 3 &&
+			  TMath::Abs(trkDxy1[i]/trkDxyError1[i]) < 3 &&
+			  trkPtError[i]/trkPt[i] < 0.05);
 
-      double maxl1pt = TMath::Max(maxCenJetEt, maxFwdJetEt);
-      //double maxl1pt = l1extra->cenJetEt[0];
-      //double maxl1pt = l1extra->fwdJetEt[0];
+	if(goodTrack)
+	{
+	  if(trkPt[i] > maxtrkpt)
+	    maxtrkpt = trkPt[i];
+	}
+      }
 
-      double maxjtpt = 0;
-      if(nref > 0)
-	maxjtpt = jtpt[0];
-
+      l1TrkPt->Fill(maxl1pt);
       if((pcollisionEventSelection == 1) && (pHBHENoiseFilter == 1))
       {
 	if(hiBin < 60)
-	  fJetPt[0]->Fill(maxjtpt);
+	  fTrkPt[0]->Fill(maxtrkpt);
 	else if (hiBin >= 100)
-	  fJetPt[1]->Fill(maxjtpt);
+	  fTrkPt[1]->Fill(maxtrkpt);
 
-	l1JetPt->Fill(maxl1pt);
-	corr->Fill(maxjtpt,maxl1pt);
+	corr->Fill(maxtrkpt,maxl1pt);
 
 	for(int k = 0; k < 4; ++k){
 	  if(maxl1pt>L1_THRESHOLD[k])
 	  {
 	    if(hiBin < 60)
-	      accepted[k][0]->Fill(maxjtpt);
+	      accepted[k][0]->Fill(maxtrkpt);
 	    else if (hiBin >= 100)
-	      accepted[k][1]->Fill(maxjtpt);
+	      accepted[k][1]->Fill(maxtrkpt);
 	  }
 	}
 
@@ -179,7 +165,7 @@ void matching_l12forest()
       count++;
     }
 
-    // for(std::vector<double>::const_iterator it = l1extra->cenJetEt.begin(); it != l1extra->cenJetEt.end(); ++it)
+    // for(std::vector<double>::const_iterator it = l1extra->cenTrkEt.begin(); it != l1extra->cenTrkEt.end(); ++it)
     // {
     //   printf("%lf\n",*it);
     // }
@@ -192,7 +178,7 @@ void matching_l12forest()
     for(int l = 0; l < 2; ++l)
     {
       a[k][l] = new TGraphAsymmErrors();
-      a[k][l]->BayesDivide(accepted[k][l],fJetPt[l]);
+      a[k][l]->BayesDivide(accepted[k][l],fTrkPt[l]);
     }
   }
   a[0][0]->SetName("asymm_pt_0_cen");
@@ -203,19 +189,19 @@ void matching_l12forest()
   a[1][1]->SetName("asymm_pt_15_periph");
   a[2][1]->SetName("asymm_pt_30_periph");
   a[3][1]->SetName("asymm_pt_60_periph");
-  
+
 
   // TCanvas *c1 = new TCanvas();
-  // l1JetPt->Draw();
+  // l1TrkPt->Draw();
   // TCanvas *c2 = new TCanvas();
-  // fJetPt->Draw();
+  // fTrkPt->Draw();
   // TCanvas *c3 = new TCanvas();
   // a->Draw("p A");
 
   //outFile->cd();
-  l1JetPt->Write();
-  fJetPt[0]->Write();
-  fJetPt[1]->Write();
+  l1TrkPt->Write();
+  fTrkPt[0]->Write();
+  fTrkPt[1]->Write();
   corr->Write();
   for(int k = 0; k < 4; ++k){
     for(int l = 0; l < 2; ++l)

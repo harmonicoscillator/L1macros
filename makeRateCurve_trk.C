@@ -2,15 +2,15 @@
 #include <TH1D.h>
 #include <TCanvas.h>
 
-void makeRateCurve()
+void makeRateCurve_trk()
 {
-  TFile *inFile = TFile::Open("hist_out_akPu3Calo_cleaned.root");
-  TH1D *counts = (TH1D*)inFile->Get("l1JetPt");
+  TFile *inFile = TFile::Open("hist_out_tracks.root");
+  TH1D *counts = (TH1D*)inFile->Get("l1TrkPt");
 
   const int nBins = 150;
   const double maxPt = 300;
 
-  TH1D *rate = new TH1D("rate",";L1 Jet p_{T};Rate (w.r.t. PbPb 2011)",nBins,0,maxPt);
+  TH1D *rate = new TH1D("rate",";L1 Track Seed Threshold p_{T};Rate (w.r.t. PbPb 2011)",nBins,0,maxPt);
 
   double total_integral = counts->Integral();
 
@@ -25,5 +25,5 @@ void makeRateCurve()
   rate->Draw("l");
   c1->SetLogy();
 
-  c1->SaveAs("minbiasHI_rate_hisub.pdf");
+  c1->SaveAs("minbiasHI_trkrate_hisub.pdf");
 }
