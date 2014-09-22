@@ -16,7 +16,8 @@
 #include <map>
 
 const int MAXJETS = 500;
-const Double_t L1_THRESHOLD[4] = {0,15,30,60};
+const Double_t L1_THRESHOLD[2] = {60, 100};
+const Int_t THRESHOLDS = 2;
 
 Long64_t makeKey(Int_t run, Int_t event){
   return (10000000000*(Long64_t)run + (Long64_t)event);
@@ -24,12 +25,12 @@ Long64_t makeKey(Int_t run, Int_t event){
 
 void matching_l12forest()
 {
-  const char *type = "l1pp_akPu3CaloJets";
+  const char *type = "akVs3CaloJets";
   //const TString l1_input = "/export/d00/scratch/luck/L1Tree_minbias_chunk1.root";
   const TString l1_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/minbias_HI_and_PP_algos.root";
   TFile *lFile = TFile::Open(l1_input);
-  //TTree *l1Tree = (TTree*)lFile->Get("HIdigis/L1UpgradeTree");
-  TTree *l1Tree = (TTree*)lFile->Get("PPdigis/L1UpgradeTree");
+  TTree *l1Tree = (TTree*)lFile->Get("HIdigis/L1UpgradeTree");
+  //TTree *l1Tree = (TTree*)lFile->Get("PPdigis/L1UpgradeTree");
 
   Int_t l1_event, l1_run;
   Int_t l1_num;
@@ -53,12 +54,11 @@ void matching_l12forest()
   //const TString forest_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/minbiasForest_merged/0.root";
   const TString forest_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/minbiasForest_merged_v2/HiForest_PbPb_Data_minbias_fromSkim.root";
   TFile *fFile = TFile::Open(forest_input);
-  TTree *fTree = (TTree*)fFile->Get("akPu3CaloJetAnalyzer/t");
+  //TTree *fTree = (TTree*)fFile->Get("akPu3CaloJetAnalyzer/t");
+  TTree *fTree = (TTree*)fFile->Get("akVs3CaloJetAnalyzer/t");
   //TTree *fTree = (TTree*)fFile->Get("multiPhotonAnalyzer/photon");
   TTree *fEvtTree = (TTree*)fFile->Get("hiEvtAnalyzer/HiTree");
-  //fTree->AddFriend(fEvtTree);
   TTree *fSkimTree = (TTree*)fFile->Get("skimanalysis/HltTree");
-  //fTree->AddFriend(fSkimTree);
 
   Int_t f_evt, f_run, f_lumi;
   Int_t hiBin;
@@ -121,22 +121,21 @@ void matching_l12forest()
 
   outFile->cd();
 
-  const int nBins = 100;
-  const double maxPt = 200;
+  const int nBins = 75;
+  const double maxPt = 300;
 
   TH1D *l1Pt = new TH1D("l1Pt",";L1 p_{T} (GeV)",nBins,0,maxPt);
   TH1D *fPt[2];
   fPt[0] = new TH1D("fPt_cen",";offline p_{T} (GeV)",nBins,0,maxPt);
   fPt[1] = (TH1D*)fPt[0]->Clone("fPt_periph");
-  TH1D *accepted[4][2];
-  accepted[0][0] = new TH1D(Form("accepted_pt%d_cen",(int)L1_THRESHOLD[0]),";offline p_{T}",nBins,0,maxPt);
-  accepted[1][0] = (TH1D*)accepted[0][0]->Clone(Form("accepted_pt%d_cen",(int)L1_THRESHOLD[1]));
-  accepted[2][0] = (TH1D*)accepted[0][0]->Clone(Form("accepted_pt%d_cen",(int)L1_THRESHOLD[2]));
-  accepted[3][0] = (TH1D*)accepted[0][0]->Clone(Form("accepted_pt%d_cen",(int)L1_THRESHOLD[3]));
-  accepted[0][1] = (TH1D*)accepted[0][0]->Clone(Form("accepted_pt%d_periph",(int)L1_THRESHOLD[0]));
-  accepted[1][1] = (TH1D*)accepted[0][0]->Clone(Form("accepted_pt%d_periph",(int)L1_THRESHOLD[1]));
-  accepted[2][1] = (TH1D*)accepted[0][0]->Clone(Form("accepted_pt%d_periph",(int)L1_THRESHOLD[2]));
-  accepted[3][1] = (TH1D*)accepted[0][0]->Clone(Form("accepted_pt%d_periph",(int)L1_THRESHOLD[3]));
+  TH1D *accepted[THRESHOLDS][2];
+
+  for(int i = 0; i < THRESHOLDS; ++i)
+    for(int j = 0; j < 2; ++j)
+    {
+      accepted[i][j] = new TH1D(Form("accepted_pt%d_%d",(int)L1_THRESHOLD[i],j),";offline p_{T}",nBins,0,maxPt);
+    }
+
   TH2D *corr = new TH2D("corr",";offline p_{T};l1 p_{T}",nBins,0,maxPt,nBins,0,maxPt);
 
   int count = 0;
@@ -189,7 +188,7 @@ void matching_l12forest()
 
 	corr->Fill(maxfpt,maxl1pt);
 
-	for(int k = 0; k < 4; ++k)
+	for(int k = 0; k < THRESHOLDS; ++k)
 	{
 	  if(maxl1pt>L1_THRESHOLD[k])
 	  {
@@ -204,27 +203,20 @@ void matching_l12forest()
   }
 
   TGraphAsymmErrors *a[4][2];
-  for(int k = 0; k < 4; ++k){
+  for(int k = 0; k < THRESHOLDS; ++k){
     for(int l = 0; l < 2; ++l)
     {
       a[k][l] = new TGraphAsymmErrors();
       a[k][l]->BayesDivide(accepted[k][l],fPt[l]);
+      a[k][l]->SetName(Form("asymm_pt_%d_%d",(int)L1_THRESHOLD[k],l));
     }
   }
-  a[0][0]->SetName(Form("asymm_pt_%d_cen",(int)L1_THRESHOLD[0]));
-  a[1][0]->SetName(Form("asymm_pt_%d_cen",(int)L1_THRESHOLD[1]));
-  a[2][0]->SetName(Form("asymm_pt_%d_cen",(int)L1_THRESHOLD[2]));
-  a[3][0]->SetName(Form("asymm_pt_%d_cen",(int)L1_THRESHOLD[3]));
-  a[0][1]->SetName(Form("asymm_pt_%d_periph",(int)L1_THRESHOLD[0]));
-  a[1][1]->SetName(Form("asymm_pt_%d_periph",(int)L1_THRESHOLD[1]));
-  a[2][1]->SetName(Form("asymm_pt_%d_periph",(int)L1_THRESHOLD[2]));
-  a[3][1]->SetName(Form("asymm_pt_%d_periph",(int)L1_THRESHOLD[3]));
 
   l1Pt->Write();
   fPt[0]->Write();
   fPt[1]->Write();
   corr->Write();
-  for(int k = 0; k < 4; ++k){
+  for(int k = 0; k < THRESHOLDS; ++k){
     for(int l = 0; l < 2; ++l)
     {
       accepted[k][l]->Write();
