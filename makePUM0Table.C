@@ -136,7 +136,7 @@ void makePUM0Table()
       hists_eta[i]->SetBinContent(j,Mean);
       hists_eta[i]->SetBinError(j,MeanError);
       std::cout << Mean*0.5;
-      if(j != 17) std::cout << ", ";
+      if(!((i == 21) && (j == 17))) std::cout << ", ";
     }
   }
   std::cout << ")" << std::endl;
