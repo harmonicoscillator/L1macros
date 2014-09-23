@@ -23,7 +23,7 @@ Long64_t makeKey(Int_t run, Int_t event){
 
 void makePUM0Table()
 {
-  const TString l1_input = "/net/hisrv0001/home/luck/EMULATOR/CMSSW_7_2_0_pre6/src/L1UpgradeAnalyzer.root";
+  const TString l1_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/minbiasHIanalyzer_withregions.root";
   TFile *lFile = TFile::Open(l1_input);
   TTree *l1Tree = (TTree*)lFile->Get("L1UpgradeAnalyzer/L1UpgradeTree");
 
@@ -55,12 +55,12 @@ void makePUM0Table()
   fSkimTree->SetBranchAddress("pcollisionEventSelection",&pcollisionEventSelection);
   fSkimTree->SetBranchAddress("pHBHENoiseFilter",&pHBHENoiseFilter);
 
-  TFile *outFile = new TFile("HI_PUM0_out.root","RECREATE");
+  TFile *outFile = new TFile("HI_PUM0_evtsel_out.root","RECREATE");
 
   std::map<Long64_t, Long64_t> kmap;
 
   // choose loop over l1 tree first (smaller)
-  std::cout << "Begin making map." << std::endl;
+  //std::cout << "Begin making map." << std::endl;
   Long64_t l_entries = l1Tree->GetEntries();
   for(Long64_t j = 0; j < l_entries; ++j)
   {
@@ -70,7 +70,7 @@ void makePUM0Table()
     std::pair<Long64_t,Long64_t> p(key,j);
     kmap.insert(p);
   }
-  std::cout << "Finished making map." << std::endl;
+  //std::cout << "Finished making map." << std::endl;
 
   outFile->cd();
 
@@ -78,7 +78,7 @@ void makePUM0Table()
   for(int i = 0; i < 22; ++i)
     for(int j = 0; j < 18; ++j)
     {
-      hists[i][j] = new TH1I(Form("hist_%d_%d",i,j),"", 64,0,64);
+      hists[i][j] = new TH1I(Form("hist_%d_%d",i,j),"", 1024,0,1024);
     }
 
   TH2I *centPUM = new TH2I("cenPUM","",200,0,200,396,0,396);
@@ -87,8 +87,8 @@ void makePUM0Table()
   Long64_t entries = fEvtTree->GetEntries();
   for(Long64_t j = 0; j < entries; ++j)
   {
-    if(j % 10000 == 0)
-      printf("%lld / %lld\n",j,entries);
+    //if(j % 10000 == 0)
+    //  printf("%lld / %lld\n",j,entries);
 
     fEvtTree->GetEntry(j);
     Long64_t key = makeKey(f_run, f_evt);
@@ -101,25 +101,30 @@ void makePUM0Table()
       kmap.erase(key);
       count++;
 
-      // fSkimTree->GetEntry(j);
-      // if((pcollisionEventSelection == 1) && (pHBHENoiseFilter == 1))
-      // {
-
-      int pubin = hiBin / 11; // 11 = 200/18, must be integer division
-
-      int PUM0 = 0;
-      for(int i = 0; i < NREG; ++i)
+      fSkimTree->GetEntry(j);
+      if((pcollisionEventSelection == 1) && (pHBHENoiseFilter == 1))
       {
-	hists[region_hwEta[i]][pubin]->Fill(region_hwPt[i]);
-	if(region_hwPt[i] > 0)
-	  ++PUM0;
-      }
-      centPUM->Fill(hiBin,PUM0);
 
-      // }
+	//int pubin = (int) ( (double)hiBin * (18.0/200.0));
+	int PUM0 = 0;
+	for(int i = 0; i < NREG; ++i)
+	{
+	  if(region_hwPt[i] > 0)
+	    ++PUM0;
+	}
+	int pubin = PUM0/22;
+	if(pubin == 18) pubin = 17; //special case for every region firing
+	for(int i = 0; i < NREG; ++i)
+	{
+	  hists[region_hwEta[i]][pubin]->Fill(region_hwPt[i]);
+	}
+	centPUM->Fill(hiBin,PUM0);
+
+      }
     }
   }
 
+  std::cout << "cms.vdouble(";
   TH1D *hists_eta[22];
   for(int i = 0; i < 22; ++i)
   {
@@ -130,8 +135,11 @@ void makePUM0Table()
       double MeanError = hists[i][j]->GetMeanError();
       hists_eta[i]->SetBinContent(j,Mean);
       hists_eta[i]->SetBinError(j,MeanError);
+      std::cout << Mean*0.5;
+      if(j != 17) std::cout << ", ";
     }
   }
+  std::cout << ")" << std::endl;
 
   for(int i = 0; i < 22; ++i)
   {
@@ -144,7 +152,7 @@ void makePUM0Table()
   centPUM->Write();
 
 
-  std::cout << "Matching entries: " << count << std::endl;
+  //std::cout << "Matching entries: " << count << std::endl;
 
   lFile->Close();
   fFile->Close();
