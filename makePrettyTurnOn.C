@@ -6,8 +6,8 @@
 
 void makePrettyTurnOn()
 {
-  const char *type = "akVs3CaloJets";
-  TFile *inFile = TFile::Open(Form("hist_out_%s_cleaned.root",type));
+  const char *type = "akVs3CaloJets_etap2";
+  TFile *inFile = TFile::Open(Form("hist_out_%s.root",type));
   //TGraphAsymmErrors *asymm_pt_0_cen = (TGraphAsymmErrors*)inFile->Get("asymm_pt_0_0");
   //TGraphAsymmErrors *asymm_pt_15_cen = (TGraphAsymmErrors*)inFile->Get("asymm_pt_15_0");
   //TGraphAsymmErrors *asymm_pt_30_cen = (TGraphAsymmErrors*)inFile->Get("asymm_pt_30_0");

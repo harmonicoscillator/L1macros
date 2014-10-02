@@ -16,16 +16,16 @@
 #include <map>
 
 const int MAXJETS = 500;
-const Double_t L1_THRESHOLD[2] = {60, 100};
-const Int_t THRESHOLDS = 2;
+//const Double_t L1_THRESHOLD[2] = {60, 100};
+//const Int_t THRESHOLDS = 2;
 
 Long64_t makeKey(Int_t run, Int_t event){
   return (10000000000*(Long64_t)run + (Long64_t)event);
 }
 
-void matching_l12forest()
+void matchedTree()
 {
-  const char *type = "akVs3CaloJets_eta2";
+  //const char *type = "akVs3CaloJets_eta2";
   //const TString l1_input = "/export/d00/scratch/luck/L1Tree_minbias_chunk1.root";
   const TString l1_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/minbias_HI_and_PP_algos.root";
   //const TString l1_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/minbias_l1ntuple_HIPUM0.root";
@@ -37,7 +37,7 @@ void matching_l12forest()
   Int_t l1_event, l1_run;
   Int_t l1_num;
   //Int_t l1_hwPt[MAXJETS], l1_hwEta[MAXJETS], l1_hwPhi[MAXJETS], l1_hwQual[MAXJETS];
-  Double_t l1_pt[MAXJETS];//, l1_eta[MAXJETS], l1_phi[MAXJETS];
+  Double_t l1_pt[MAXJETS], l1_eta[MAXJETS], l1_phi[MAXJETS];
 
   l1Tree->SetBranchAddress("event",&l1_event);
   l1Tree->SetBranchAddress("run",&l1_run);
@@ -47,8 +47,8 @@ void matching_l12forest()
   // l1Tree->SetBranchAddress("jet_hwPhi",l1_hwPhi);
   // l1Tree->SetBranchAddress("jet_hwQual",l1_hwQual);
   l1Tree->SetBranchAddress("jet_pt",l1_pt);
-  // l1Tree->SetBranchAddress("jet_eta",l1_eta);
-  // l1Tree->SetBranchAddress("jet_phi",l1_phi);
+  l1Tree->SetBranchAddress("jet_eta",l1_eta);
+  l1Tree->SetBranchAddress("jet_phi",l1_phi);
   //l1Tree->SetBranchAddress("nEgamma",&l1_num);
   //l1Tree->SetBranchAddress("egamma_pt",l1_pt);
 
@@ -56,8 +56,8 @@ void matching_l12forest()
   //const TString forest_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/minbiasForest_merged/0.root";
   const TString forest_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/minbiasForest_merged_v2/HiForest_PbPb_Data_minbias_fromSkim.root";
   TFile *fFile = TFile::Open(forest_input);
-  //TTree *fTree = (TTree*)fFile->Get("akPu3CaloJetAnalyzer/t");
-  TTree *fTree = (TTree*)fFile->Get("akVs3CaloJetAnalyzer/t");
+  TTree *f1Tree = (TTree*)fFile->Get("akPu3CaloJetAnalyzer/t");
+  TTree *f2Tree = (TTree*)fFile->Get("akVs3CaloJetAnalyzer/t");
   //TTree *fTree = (TTree*)fFile->Get("multiPhotonAnalyzer/photon");
   TTree *fEvtTree = (TTree*)fFile->Get("hiEvtAnalyzer/HiTree");
   TTree *fSkimTree = (TTree*)fFile->Get("skimanalysis/HltTree");
@@ -75,20 +75,24 @@ void matching_l12forest()
   fSkimTree->SetBranchAddress("pcollisionEventSelection",&pcollisionEventSelection);
   fSkimTree->SetBranchAddress("pHBHENoiseFilter",&pHBHENoiseFilter);
 
-  Int_t f_num;
-  Float_t f_pt[MAXJETS];
-  Float_t f_eta[MAXJETS];
-  //Float_t f_phi[MAXJETS];
+  Int_t f1_num, f2_num;
+  Float_t f1_pt[MAXJETS], f2_pt[MAXJETS];
+  Float_t f1_eta[MAXJETS], f2_eta[MAXJETS];
+  Float_t f1_phi[MAXJETS], f2_phi[MAXJETS];
 
   //Float_t hadronicOverEm[MAXJETS], sigmaIetaIeta[MAXJETS], sigmaIphiIphi[MAXJETS];
   //Float_t cc4[MAXJETS], cr4[MAXJETS], ct4PtCut20[MAXJETS];
   //Int_t isEle[MAXJETS];
   //Float_t trkSumPtHollowConeDR04[MAXJETS], hcalTowerSumEtConeDR04[MAXJETS], ecalRecHitSumEtConeDR04[MAXJETS];
   //Float_t swissCrx[MAXJETS], seedTime[MAXJETS];
-  fTree->SetBranchAddress("nref",&f_num);
-  fTree->SetBranchAddress("jtpt",f_pt);
-  fTree->SetBranchAddress("jteta",f_eta);
-  // fTree->SetBranchAddress("jtphi",f_phi);
+  f1Tree->SetBranchAddress("nref",&f1_num);
+  f1Tree->SetBranchAddress("jtpt",f1_pt);
+  f1Tree->SetBranchAddress("jteta",f1_eta);
+  f1Tree->SetBranchAddress("jtphi",f1_phi);
+  f2Tree->SetBranchAddress("nref",&f2_num);
+  f2Tree->SetBranchAddress("jtpt",f2_pt);
+  f2Tree->SetBranchAddress("jteta",f2_eta);
+  f2Tree->SetBranchAddress("jtphi",f2_phi);
   // fTree->SetBranchAddress("nPhotons",&f_num);
   // fTree->SetBranchAddress("pt",f_pt);
   // fTree->SetBranchAddress("eta",f_eta);
@@ -106,7 +110,30 @@ void matching_l12forest()
   // fTree->SetBranchAddress("swissCrx",swissCrx);
   // fTree->SetBranchAddress("seedTime",seedTime);
 
-  TFile *outFile = new TFile(Form("hist_out_%s.root",type),"RECREATE");
+  TFile *outFile = new TFile(Form("l1_Pu_Vs_tree.root"),"RECREATE");
+  TTree *outTree = new TTree("l1_Pu_Vs_tree","l1_Pu_Vs_tree");
+
+  Int_t nl1Jet, nPuJet, nVsJet;
+  Int_t l1Jet_pt[MAXJETS], l1Jet_eta[MAXJETS], l1Jet_phi[MAXJETS];
+  Float_t PuJet_pt[MAXJETS], PuJet_eta[MAXJETS], PuJet_phi[MAXJETS];
+  Float_t VsJet_pt[MAXJETS], VsJet_eta[MAXJETS], VsJet_phi[MAXJETS];
+  Bool_t goodEvent;
+  Int_t hiBinOut;
+
+  outTree->Branch("goodEvent",&goodEvent,"goodEvent/O");
+  outTree->Branch("hiBin",&hiBinOut,"hiBin/I");
+  outTree->Branch("nl1Jet",&nl1Jet,"nl1Jet/I");
+  outTree->Branch("nPuJet",&nPuJet,"nPuJet/I");
+  outTree->Branch("nVsJet",&nVsJet,"nVsJet/I");
+  outTree->Branch("l1Jet_pt",l1Jet_pt,"l1Jet_pt[nl1Jet]/I");
+  outTree->Branch("l1Jet_eta",l1Jet_eta,"l1Jet_eta[nl1Jet]/I");
+  outTree->Branch("l1Jet_phi",l1Jet_phi,"l1Jet_phi[nl1Jet]/I");
+  outTree->Branch("PuJet_pt",PuJet_pt,"PuJet_pt[nPuJet]/F");
+  outTree->Branch("PuJet_eta",PuJet_eta,"PuJet_eta[nPuJet]/F");
+  outTree->Branch("PuJet_phi",PuJet_phi,"PuJet_phi[nPuJet]/F");
+  outTree->Branch("VsJet_pt",VsJet_pt,"VsJet_pt[nVsJet]/F");
+  outTree->Branch("VsJet_eta",VsJet_eta,"VsJet_eta[nVsJet]/F");
+  outTree->Branch("VsJet_phi",VsJet_phi,"VsJet_phi[nVsJet]/F");
 
   std::map<Long64_t, Long64_t> kmap;
 
@@ -126,26 +153,9 @@ void matching_l12forest()
 
   outFile->cd();
 
-  const int nBins = 75;
-  const double maxPt = 300;
-
-  TH1D *l1Pt = new TH1D("l1Pt",";L1 p_{T} (GeV)",nBins,0,maxPt);
-  TH1D *fPt[2];
-  fPt[0] = new TH1D("fPt_cen",";offline p_{T} (GeV)",nBins,0,maxPt);
-  fPt[1] = (TH1D*)fPt[0]->Clone("fPt_periph");
-  TH1D *accepted[THRESHOLDS][2];
-
-  for(int i = 0; i < THRESHOLDS; ++i)
-    for(int j = 0; j < 2; ++j)
-    {
-      accepted[i][j] = new TH1D(Form("accepted_pt%d_%d",(int)L1_THRESHOLD[i],j),";offline p_{T}",nBins,0,maxPt);
-    }
-
-  TH2D *corr = new TH2D("corr",";offline p_{T};l1 p_{T}",nBins,0,maxPt,nBins,0,maxPt);
-
   int count = 0;
 
-  Long64_t entries = fTree->GetEntries();
+  Long64_t entries = f1Tree->GetEntries();
   for(Long64_t j = 0; j < entries; ++j)
   {
     if(j % 10000 == 0)
@@ -163,75 +173,48 @@ void matching_l12forest()
       kmap.erase(key);
       count++;
 
-      double maxl1pt = -1;
-      if(l1_num > 0)
-	maxl1pt = l1_pt[0];
-      //if(l1_num > MAXJETS) std::cout << "TOO SMALL" << std::endl;
+      hiBinOut = hiBin;
 
-      fTree->GetEntry(j);
-      double maxfpt = -1;
-      if(f_num > 0)
+      nl1Jet = 0;
+      for(int i = 0; i < l1_num; i++)
       {
-	for(int i = 0; i < f_num; ++i)
-	{
-	  // if( (hadronicOverEm[i] < 0.1) && (!isEle[i]) &&
-	  //     (swissCrx[i] < 0.9) && (seedTime[i] < 3) &&
-	  //     (sigmaIphiIphi[i] > 0.002) && (sigmaIetaIeta[i] > 0.002))
-	  if(abs(f_eta[i]) < 2)
-	  {
-	      maxfpt = f_pt[i];
-	      break;
-	  }
-	}
+	l1Jet_pt[i] = l1_pt[i];
+	l1Jet_eta[i] = l1_eta[i];
+	l1Jet_phi[i] = l1_phi[i];
+	nl1Jet++;
+	if(nl1Jet == 4) break;
       }
-      //if(f_num > MAXJETS) std::cout << "TOO SMALL" << std::endl;
-      l1Pt->Fill(maxl1pt);
+
+      f1Tree->GetEntry(j);
+      f2Tree->GetEntry(j);
+
+      nPuJet = f1_num;
+      for(int i = 0; i < f1_num; i++)
+      {
+	PuJet_pt[i] = f1_pt[i];
+	PuJet_eta[i] = f1_eta[i];
+	PuJet_phi[i] = f1_phi[i];
+      }
+
+      nVsJet = f2_num;
+      for(int i = 0; i < f2_num; i++)
+      {
+	VsJet_pt[i] = f2_pt[i];
+	VsJet_eta[i] = f2_eta[i];
+	VsJet_phi[i] = f2_phi[i];
+      }
 
       fSkimTree->GetEntry(j);
+      goodEvent = false;
       if((pcollisionEventSelection == 1) && (pHBHENoiseFilter == 1) && (abs(vz) < 15))
       {
-	if(hiBin < 60)
-	  fPt[0]->Fill(maxfpt);
-	else if (hiBin >= 100)
-	  fPt[1]->Fill(maxfpt);
-
-	corr->Fill(maxfpt,maxl1pt);
-
-	for(int k = 0; k < THRESHOLDS; ++k)
-	{
-	  if(maxl1pt>L1_THRESHOLD[k])
-	  {
-	    if(hiBin < 60)
-	      accepted[k][0]->Fill(maxfpt);
-	    else if (hiBin >= 100)
-	      accepted[k][1]->Fill(maxfpt);
-	  }
-	}
+	goodEvent = true;
       }
+
+      outTree->Write();
     }
   }
 
-  TGraphAsymmErrors *a[4][2];
-  for(int k = 0; k < THRESHOLDS; ++k){
-    for(int l = 0; l < 2; ++l)
-    {
-      a[k][l] = new TGraphAsymmErrors();
-      a[k][l]->BayesDivide(accepted[k][l],fPt[l]);
-      a[k][l]->SetName(Form("asymm_pt_%d_%d",(int)L1_THRESHOLD[k],l));
-    }
-  }
-
-  l1Pt->Write();
-  fPt[0]->Write();
-  fPt[1]->Write();
-  corr->Write();
-  for(int k = 0; k < THRESHOLDS; ++k){
-    for(int l = 0; l < 2; ++l)
-    {
-      accepted[k][l]->Write();
-      a[k][l]->Write();
-    }
-  }
 
   std::cout << "Matching entries: " << count << std::endl;
 
@@ -242,6 +225,6 @@ void matching_l12forest()
 
 int main()
 {
-  matching_l12forest();
+  matchedTree();
   return 0;
 }
