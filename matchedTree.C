@@ -10,6 +10,7 @@
 #include <TString.h>
 #include <TLegendEntry.h>
 #include <TGraphAsymmErrors.h>
+#include <TMath.h>
 
 #include <vector>
 #include <iostream>
@@ -23,29 +24,36 @@ Long64_t makeKey(Int_t run, Int_t event){
   return (10000000000*(Long64_t)run + (Long64_t)event);
 }
 
-void matchedTree()
+void matchedTree(int sampleNum, bool montecarlo)
 {
+  std::cout << "MC? " << montecarlo << std::endl;
   //const char *type = "akVs3CaloJets_eta2";
   //const TString l1_input = "/export/d00/scratch/luck/L1Tree_minbias_chunk1.root";
-  const TString l1_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/minbias_HI_and_PP_algos.root";
+  //const TString l1_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/minbias_HI_and_PP_algos.root";
   //const TString l1_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/minbias_l1ntuple_HIPUM0.root";
+  //const TString l1_input = "/export/d00/scratch/luck/dijet15_l1ntuple_20141022_v2.root";
+  //const TString l1_input = "/export/d00/scratch/luck/photon30_l1ntuple_20141022_v2.root";
+  //const TString l1_input = "/export/d00/scratch/luck/hydjet_l1ntuple_20141022_v2.root";
+  //const TString l1_input = "/export/d00/scratch/luck/jet55_data_l1ntuple_20141022.root";
+  const TString l1_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/jet55_data_l1ntuple_20141022.root";
+
   TFile *lFile = TFile::Open(l1_input);
-  //TTree *l1Tree = (TTree*)lFile->Get("L1UpgradeAnalyzer/L1UpgradeTree");
-  TTree *l1Tree = (TTree*)lFile->Get("HIdigis/L1UpgradeTree");
+  TTree *l1Tree = (TTree*)lFile->Get("L1UpgradeAnalyzer/L1UpgradeTree");
+  //TTree *l1Tree = (TTree*)lFile->Get("HIdigis/L1UpgradeTree");
   //TTree *l1Tree = (TTree*)lFile->Get("PPdigis/L1UpgradeTree");
 
   Int_t l1_event, l1_run;
   Int_t l1_num;
-  //Int_t l1_hwPt[MAXJETS], l1_hwEta[MAXJETS], l1_hwPhi[MAXJETS], l1_hwQual[MAXJETS];
+  Int_t l1_hwPt[MAXJETS], l1_hwEta[MAXJETS], l1_hwPhi[MAXJETS], l1_hwQual[MAXJETS];
   Double_t l1_pt[MAXJETS], l1_eta[MAXJETS], l1_phi[MAXJETS];
 
   l1Tree->SetBranchAddress("event",&l1_event);
   l1Tree->SetBranchAddress("run",&l1_run);
   l1Tree->SetBranchAddress("nJet",&l1_num);
-  // l1Tree->SetBranchAddress("jet_hwPt",l1_hwPt);
-  // l1Tree->SetBranchAddress("jet_hwEta",l1_hwEta);
-  // l1Tree->SetBranchAddress("jet_hwPhi",l1_hwPhi);
-  // l1Tree->SetBranchAddress("jet_hwQual",l1_hwQual);
+  l1Tree->SetBranchAddress("jet_hwPt",l1_hwPt);
+  l1Tree->SetBranchAddress("jet_hwEta",l1_hwEta);
+  l1Tree->SetBranchAddress("jet_hwPhi",l1_hwPhi);
+  l1Tree->SetBranchAddress("jet_hwQual",l1_hwQual);
   l1Tree->SetBranchAddress("jet_pt",l1_pt);
   l1Tree->SetBranchAddress("jet_eta",l1_eta);
   l1Tree->SetBranchAddress("jet_phi",l1_phi);
@@ -54,13 +62,39 @@ void matchedTree()
 
   //const TString forest_input = "/mnt/hadoop/cms/store/user/velicanu/HIMinBias2011_GR_R_53_LV6_CMSSW_5_3_16_Forest_Track8_Jet21/0.root";
   //const TString forest_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/minbiasForest_merged/0.root";
-  const TString forest_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/minbiasForest_merged_v2/HiForest_PbPb_Data_minbias_fromSkim.root";
-  TFile *fFile = TFile::Open(forest_input);
-  TTree *f1Tree = (TTree*)fFile->Get("akPu3CaloJetAnalyzer/t");
-  TTree *f2Tree = (TTree*)fFile->Get("akVs3CaloJetAnalyzer/t");
-  //TTree *fTree = (TTree*)fFile->Get("multiPhotonAnalyzer/photon");
-  TTree *fEvtTree = (TTree*)fFile->Get("hiEvtAnalyzer/HiTree");
-  TTree *fSkimTree = (TTree*)fFile->Get("skimanalysis/HltTree");
+  //const TString forest_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/minbiasForest_merged_v2/HiForest_PbPb_Data_minbias_fromSkim.root";
+  //const TString forest_input = "/mnt/hadoop/cms/store/user/dgulhan/PYTHIA_HYDJET_Track9_Jet30_Pyquen_DiJet_TuneZ2_Unquenched_Hydjet1p8_2760GeV_merged/HiForest_PYTHIA_HYDJET_pthat15_Track9_Jet30_matchEqR_merged_forest_0.root";
+  //const TString forest_input = "/mnt/hadoop/cms/store/user/luck/2014-photon-forests/partial_PbPb_gammaJet_MC/HiForest_QCDPhoton30.root";
+  //const TString forest_input = "/mnt/hadoop/cms/store/user/ginnocen/Hydjet1p8_TuneDrum_Quenched_MinBias_2760GeV/HiMinBias_Forest_26June2014/d9ab4aca1923b3220eacf8ee0d550950/*.root";
+  TString forest_input[10];
+  TString base = "/mnt/hadoop/cms/store/user/belt/HiForest_jet55or65or80_JetRAA_v1_final/";
+  forest_input[0] = base + "HiForest_jet55or65or80_JetRAA_v1_lumi1_*.root";
+  forest_input[1] = base + "HiForest_jet55or65or80_JetRAA_v1_lumi2_*.root";
+  forest_input[2] = base + "HiForest_jet55or65or80_JetRAA_v1_lumi3a_*.root";
+  forest_input[3] = base + "HiForest_jet55or65or80_JetRAA_v1_lumi3b_*.root";
+  forest_input[4] = base + "HiForest_jet55or65or80_JetRAA_v1_lumi4_*.root";
+  forest_input[5] = base + "HiForest_jet55or65or80_JetRAA_v1_lumi5_*.root";
+  forest_input[6] = base + "HiForest_jet55or65or80_JetRAA_v1_lumi6_*.root";
+  forest_input[7] = base + "HiForest_jet55or65or80_JetRAA_v1_lumi7_*.root";
+  forest_input[8] = base + "HiForest_jet55or65or80_JetRAA_v1_lumi8_*.root";
+  forest_input[9] = base + "HiForest_jet55or65or80_JetRAA_v1_lumi9_*.root";
+
+  // TFile *fFile = TFile::Open(forest_input);
+  // TTree *f1Tree = (TTree*)fFile->Get("akPu3CaloJetAnalyzer/t");
+  // TTree *f2Tree = (TTree*)fFile->Get("akVs3CaloJetAnalyzer/t");
+  // //TTree *fTree = (TTree*)fFile->Get("multiPhotonAnalyzer/photon");
+  // TTree *fEvtTree = (TTree*)fFile->Get("hiEvtAnalyzer/HiTree");
+  // TTree *fSkimTree = (TTree*)fFile->Get("skimanalysis/HltTree");
+
+  TChain *f1Tree = new TChain("akPu3CaloJetAnalyzer/t","f1Tree");
+  TChain *f2Tree = new TChain("akVs3CaloJetAnalyzer/t","f2Tree");
+  TChain *fEvtTree = new TChain("hiEvtAnalyzer/HiTree","fEvtTree");
+  TChain *fSkimTree = new TChain("skimanalysis/HltTree","fSkimTree");
+
+  f1Tree->Add(forest_input[sampleNum]);
+  f2Tree->Add(forest_input[sampleNum]);
+  fEvtTree->Add(forest_input[sampleNum]);
+  fSkimTree->Add(forest_input[sampleNum]);
 
   Int_t f_evt, f_run, f_lumi;
   Float_t vz;
@@ -79,6 +113,10 @@ void matchedTree()
   Float_t f1_pt[MAXJETS], f2_pt[MAXJETS];
   Float_t f1_eta[MAXJETS], f2_eta[MAXJETS];
   Float_t f1_phi[MAXJETS], f2_phi[MAXJETS];
+  Float_t f1_rawpt[MAXJETS], f2_rawpt[MAXJETS];
+
+  Int_t num_gen;
+  Float_t genpt[MAXJETS], geneta[MAXJETS], genphi[MAXJETS];
 
   //Float_t hadronicOverEm[MAXJETS], sigmaIetaIeta[MAXJETS], sigmaIphiIphi[MAXJETS];
   //Float_t cc4[MAXJETS], cr4[MAXJETS], ct4PtCut20[MAXJETS];
@@ -89,10 +127,12 @@ void matchedTree()
   f1Tree->SetBranchAddress("jtpt",f1_pt);
   f1Tree->SetBranchAddress("jteta",f1_eta);
   f1Tree->SetBranchAddress("jtphi",f1_phi);
+  f1Tree->SetBranchAddress("rawpt",f1_rawpt);
   f2Tree->SetBranchAddress("nref",&f2_num);
   f2Tree->SetBranchAddress("jtpt",f2_pt);
   f2Tree->SetBranchAddress("jteta",f2_eta);
   f2Tree->SetBranchAddress("jtphi",f2_phi);
+  f2Tree->SetBranchAddress("rawpt",f2_rawpt);
   // fTree->SetBranchAddress("nPhotons",&f_num);
   // fTree->SetBranchAddress("pt",f_pt);
   // fTree->SetBranchAddress("eta",f_eta);
@@ -110,30 +150,59 @@ void matchedTree()
   // fTree->SetBranchAddress("swissCrx",swissCrx);
   // fTree->SetBranchAddress("seedTime",seedTime);
 
-  TFile *outFile = new TFile(Form("l1_Pu_Vs_tree.root"),"RECREATE");
+  if(montecarlo)
+  {
+    f1Tree->SetBranchAddress("ngen",&num_gen);
+    f1Tree->SetBranchAddress("genpt",genpt);
+    f1Tree->SetBranchAddress("geneta",geneta);
+    f1Tree->SetBranchAddress("genphi",genphi);
+  }
+
+  TFile *outFile = new TFile(Form("jet55_data_compTree_%i.root",sampleNum),"RECREATE");
   TTree *outTree = new TTree("l1_Pu_Vs_tree","l1_Pu_Vs_tree");
 
-  Int_t nl1Jet, nPuJet, nVsJet;
-  Int_t l1Jet_pt[MAXJETS], l1Jet_eta[MAXJETS], l1Jet_phi[MAXJETS];
-  Float_t PuJet_pt[MAXJETS], PuJet_eta[MAXJETS], PuJet_phi[MAXJETS];
-  Float_t VsJet_pt[MAXJETS], VsJet_eta[MAXJETS], VsJet_phi[MAXJETS];
+  Int_t run, lumi, evt;
+
+  Int_t nl1Jet, nPuJet, nVsJet, nGenJet;
+  Int_t l1Jet_hwPt[MAXJETS], l1Jet_hwEta[MAXJETS], l1Jet_hwPhi[MAXJETS], l1Jet_hwQual[MAXJETS];
+  Float_t l1Jet_pt[MAXJETS], l1Jet_eta[MAXJETS], l1Jet_phi[MAXJETS];
+  Float_t PuJet_pt[MAXJETS], PuJet_eta[MAXJETS], PuJet_phi[MAXJETS], PuJet_rawpt[MAXJETS];
+  Float_t VsJet_pt[MAXJETS], VsJet_eta[MAXJETS], VsJet_phi[MAXJETS], VsJet_rawpt[MAXJETS];
+  Float_t genJet_pt[MAXJETS], genJet_eta[MAXJETS], genJet_phi[MAXJETS];
   Bool_t goodEvent;
   Int_t hiBinOut;
+
+  outTree->Branch("run",&run,"run/I");
+  outTree->Branch("lumi",&lumi,"lumi/I");
+  outTree->Branch("evt",&evt,"evt/I");
 
   outTree->Branch("goodEvent",&goodEvent,"goodEvent/O");
   outTree->Branch("hiBin",&hiBinOut,"hiBin/I");
   outTree->Branch("nl1Jet",&nl1Jet,"nl1Jet/I");
   outTree->Branch("nPuJet",&nPuJet,"nPuJet/I");
   outTree->Branch("nVsJet",&nVsJet,"nVsJet/I");
-  outTree->Branch("l1Jet_pt",l1Jet_pt,"l1Jet_pt[nl1Jet]/I");
-  outTree->Branch("l1Jet_eta",l1Jet_eta,"l1Jet_eta[nl1Jet]/I");
-  outTree->Branch("l1Jet_phi",l1Jet_phi,"l1Jet_phi[nl1Jet]/I");
+  outTree->Branch("l1Jet_hwPt",l1Jet_hwPt,"l1Jet_hwPt[nl1Jet]/I");
+  outTree->Branch("l1Jet_hwEta",l1Jet_hwEta,"l1Jet_hwEta[nl1Jet]/I");
+  outTree->Branch("l1Jet_hwPhi",l1Jet_hwPhi,"l1Jet_hwPhi[nl1Jet]/I");
+  outTree->Branch("l1Jet_hwQual",l1Jet_hwQual,"l1Jet_hwQual[nl1Jet]/I");
+  outTree->Branch("l1Jet_pt",l1Jet_pt,"l1Jet_pt[nl1Jet]/F");
+  outTree->Branch("l1Jet_eta",l1Jet_eta,"l1Jet_eta[nl1Jet]/F");
+  outTree->Branch("l1Jet_phi",l1Jet_phi,"l1Jet_phi[nl1Jet]/F");
   outTree->Branch("PuJet_pt",PuJet_pt,"PuJet_pt[nPuJet]/F");
   outTree->Branch("PuJet_eta",PuJet_eta,"PuJet_eta[nPuJet]/F");
   outTree->Branch("PuJet_phi",PuJet_phi,"PuJet_phi[nPuJet]/F");
+  outTree->Branch("PuJet_rawpt",PuJet_rawpt,"PuJet_rawpt[nPuJet]/F");
   outTree->Branch("VsJet_pt",VsJet_pt,"VsJet_pt[nVsJet]/F");
   outTree->Branch("VsJet_eta",VsJet_eta,"VsJet_eta[nVsJet]/F");
   outTree->Branch("VsJet_phi",VsJet_phi,"VsJet_phi[nVsJet]/F");
+  outTree->Branch("VsJet_rawpt",VsJet_rawpt,"VsJet_rawpt[nVsJet]/F");
+  if(montecarlo)
+  {
+    outTree->Branch("nGenJet",&nGenJet,"nGenJet/I");
+    outTree->Branch("genJet_pt",genJet_pt,"genJet_pt[nGenJet]/F");
+    outTree->Branch("genJet_eta",genJet_eta,"genJet_eta[nGenJet]/F");
+    outTree->Branch("genJet_phi",genJet_phi,"genJet_phi[nGenJet]/F");
+  }
 
   std::map<Long64_t, Long64_t> kmap;
 
@@ -173,16 +242,22 @@ void matchedTree()
       kmap.erase(key);
       count++;
 
+      run = f_run;
+      lumi = 0; //until I fix the analyzer
+      evt = f_evt;
       hiBinOut = hiBin;
 
-      nl1Jet = 0;
+      nl1Jet = l1_num;
       for(int i = 0; i < l1_num; i++)
       {
+	l1Jet_hwPt[i] = l1_hwPt[i];
+	l1Jet_hwEta[i] = l1_hwEta[i];
+	l1Jet_hwPhi[i] = l1_hwPhi[i];
+	l1Jet_hwQual[i] = l1_hwQual[i];
+
 	l1Jet_pt[i] = l1_pt[i];
 	l1Jet_eta[i] = l1_eta[i];
 	l1Jet_phi[i] = l1_phi[i];
-	nl1Jet++;
-	if(nl1Jet == 4) break;
       }
 
       f1Tree->GetEntry(j);
@@ -192,6 +267,7 @@ void matchedTree()
       for(int i = 0; i < f1_num; i++)
       {
 	PuJet_pt[i] = f1_pt[i];
+	PuJet_rawpt[i] = f1_rawpt[i];
 	PuJet_eta[i] = f1_eta[i];
 	PuJet_phi[i] = f1_phi[i];
       }
@@ -200,31 +276,52 @@ void matchedTree()
       for(int i = 0; i < f2_num; i++)
       {
 	VsJet_pt[i] = f2_pt[i];
+	VsJet_rawpt[i] = f2_rawpt[i];
 	VsJet_eta[i] = f2_eta[i];
 	VsJet_phi[i] = f2_phi[i];
       }
 
+      if(montecarlo)
+      {
+	nGenJet = num_gen;
+	for(int i = 0; i < num_gen; i++)
+	{
+	  genJet_pt[i] = genpt[i];
+	  genJet_eta[i] = geneta[i];
+	  genJet_phi[i] = genphi[i];
+	}
+      }
+
       fSkimTree->GetEntry(j);
       goodEvent = false;
-      if((pcollisionEventSelection == 1) && (pHBHENoiseFilter == 1) && (abs(vz) < 15))
+      if((pcollisionEventSelection == 1) && (montecarlo || (pHBHENoiseFilter == 1)) && (TMath::Abs(vz) < 15))
       {
 	goodEvent = true;
       }
 
-      outTree->Write();
+      outTree->Fill();
     }
   }
 
+  outTree->Write();
 
   std::cout << "Matching entries: " << count << std::endl;
 
   lFile->Close();
-  fFile->Close();
+  //fFile->Close();
   outFile->Close();
 }
 
-int main()
+int main(int argc, char **argv)
 {
-  matchedTree();
+  bool montecarlo = false;
+  int sampleNum = 0;
+  if(argc == 3)
+  {
+    montecarlo = atoi(argv[2]);
+    sampleNum = atoi(argv[1]);
+  }
+
+  matchedTree(sampleNum, montecarlo);
   return 0;
 }
