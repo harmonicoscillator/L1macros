@@ -17,18 +17,18 @@
 #include <map>
 
 const int MAXJETS = 500;
-const Int_t THRESHOLDS = 11;
-const Double_t L1_THRESHOLD[THRESHOLDS] = {12,16,20,24,28,32,40,52,60,80,100};
+const Int_t THRESHOLDS = 8;
+const Double_t L1_THRESHOLD[THRESHOLDS] = {2, 4, 5, 6, 7, 8, 10, 12};
 
 void makeTurnPhotonOn_fromTree()
 {
-  TFile *inFile = TFile::Open("photon30_compTree.root");
+  TFile *inFile = TFile::Open("minbias_photon_rctCalibrations_v4_compTree.root");
   //TFile *inFile = TFile::Open("/export/d00/scratch/luck/jet55_data_compTree_combined.root");
   TTree *inTree = (TTree*)inFile->Get("l1_photon_tree");
 
   Int_t run, lumi, evt;
 
-  Int_t nl1Egamma, nGen;
+  Int_t nl1Egamma;
   Int_t l1Egamma_hwPt[MAXJETS], l1Egamma_hwEta[MAXJETS], l1Egamma_hwPhi[MAXJETS], l1Egamma_hwQual[MAXJETS];
   Int_t l1Egamma_hwIso[MAXJETS];
   Float_t l1Egamma_pt[MAXJETS], l1Egamma_eta[MAXJETS], l1Egamma_phi[MAXJETS];
@@ -37,18 +37,18 @@ void makeTurnPhotonOn_fromTree()
   Float_t photon_pt[MAXJETS];
   Float_t photon_eta[MAXJETS];
   Float_t photon_phi[MAXJETS];
-  Float_t photon_cc4[MAXJETS];
-  Float_t photon_cr4[MAXJETS];
-  Float_t photon_ct4PtCut20[MAXJETS];
-  Float_t photon_trkSumPtHollowConeDR04[MAXJETS];
-  Float_t photon_hcalTowerSumEtConeDR04[MAXJETS];
-  Float_t photon_ecalRecHitSumEtConeDR04[MAXJETS];
-  Float_t photon_hadronicOverEm[MAXJETS];
-  Float_t photon_sigmaIetaIeta[MAXJETS];
-  Float_t photon_isEle[MAXJETS];
-  Float_t photon_sigmaIphiIphi[MAXJETS];
-  Float_t photon_swissCrx[MAXJETS];
-  Float_t photon_seedTime[MAXJETS];
+  Float_t cc4[MAXJETS];
+  Float_t cr4[MAXJETS];
+  Float_t ct4PtCut20[MAXJETS];
+  Float_t trkSumPtHollowConeDR04[MAXJETS];
+  Float_t hcalTowerSumEtConeDR04[MAXJETS];
+  Float_t ecalRecHitSumEtConeDR04[MAXJETS];
+  Float_t hadronicOverEm[MAXJETS];
+  Float_t sigmaIetaIeta[MAXJETS];
+  Float_t isEle[MAXJETS];
+  Float_t sigmaIphiIphi[MAXJETS];
+  Float_t swissCrx[MAXJETS];
+  Float_t seedTime[MAXJETS];
 
   Bool_t goodEvent;
   Int_t hiBin;
@@ -74,37 +74,38 @@ void makeTurnPhotonOn_fromTree()
   inTree->SetBranchAddress("photon_pt",photon_pt);
   inTree->SetBranchAddress("photon_eta",photon_eta);
   inTree->SetBranchAddress("photon_phi",photon_phi);
- 
-  inTree->SetBranchAddress("cc4",photon_cc4);
-  inTree->SetBranchAddress("cr4",photon_cr4);
-  inTree->SetBranchAddress("ct4PtCut20",photon_ct4PtCut20);
-  inTree->SetBranchAddress("trkSumPtHollowConeDR04",photon_trkSumPtHollowConeDR04);
-  inTree->SetBranchAddress("hcalTowerSumEtConeDR04",photon_hcalTowerSumEtConeDR04);
-  inTree->SetBranchAddress("ecalRecHitSumEtConeDR04",photon_ecalRecHitSumEtConeDR04);
-  inTree->SetBranchAddress("hadronicOverEm",photon_hadronicOverEm);
-  inTree->SetBranchAddress("sigmaIetaIeta",photon_sigmaIetaIeta);
-  inTree->SetBranchAddress("isEle",photon_isEle);
-  inTree->SetBranchAddress("sigmaIphiIphi",photon_sigmaIphiIphi);
-  inTree->SetBranchAddress("swissCrx",photon_swissCrx);
-  inTree->SetBranchAddress("seedTime",photon_seedTime);
 
-  Float_t gen_pt[MAXJETS], gen_eta[MAXJETS];//, gen_phi[MAXJETS];
-  Float_t gen_iso[MAXJETS];
-  Int_t gen_id[MAXJETS], gen_momId[MAXJETS];
+  inTree->SetBranchAddress("cc4",cc4);
+  inTree->SetBranchAddress("cr4",cr4);
+  inTree->SetBranchAddress("ct4PtCut20",ct4PtCut20);
+  inTree->SetBranchAddress("trkSumPtHollowConeDR04",trkSumPtHollowConeDR04);
+  inTree->SetBranchAddress("hcalTowerSumEtConeDR04",hcalTowerSumEtConeDR04);
+  inTree->SetBranchAddress("ecalRecHitSumEtConeDR04",ecalRecHitSumEtConeDR04);
+  inTree->SetBranchAddress("hadronicOverEm",hadronicOverEm);
+  inTree->SetBranchAddress("sigmaIetaIeta",sigmaIetaIeta);
+  inTree->SetBranchAddress("isEle",isEle);
+  inTree->SetBranchAddress("sigmaIphiIphi",sigmaIphiIphi);
+  inTree->SetBranchAddress("swissCrx",swissCrx);
+  inTree->SetBranchAddress("seedTime",seedTime);
 
-  inTree->SetBranchAddress("nGen",&nGen);
-  inTree->SetBranchAddress("gen_pt",gen_pt);
-  inTree->SetBranchAddress("gen_eta",gen_eta);
-  //inTree->SetBranchAddress("gen_phi",gen_phi);
-  inTree->SetBranchAddress("gen_iso",gen_iso);
-  inTree->SetBranchAddress("gen_id",gen_id);
-  inTree->SetBranchAddress("gen_momId",gen_momId);
+  // Int_t nGen;
+  // Float_t gen_pt[MAXJETS], gen_eta[MAXJETS];//, gen_phi[MAXJETS];
+  // Float_t gen_iso[MAXJETS];
+  // Int_t gen_id[MAXJETS], gen_momId[MAXJETS];
+
+  // inTree->SetBranchAddress("nGen",&nGen);
+  // inTree->SetBranchAddress("gen_pt",gen_pt);
+  // inTree->SetBranchAddress("gen_eta",gen_eta);
+  // //inTree->SetBranchAddress("gen_phi",gen_phi);
+  // inTree->SetBranchAddress("gen_iso",gen_iso);
+  // inTree->SetBranchAddress("gen_id",gen_id);
+  // inTree->SetBranchAddress("gen_momId",gen_momId);
 
 
-  TFile *outFile = new TFile(Form("hist_photon30_gen.root"),"RECREATE");
+  TFile *outFile = new TFile(Form("hist_minbias_photon_rctCalibrations_v4_iso_reco.root"),"RECREATE");
   outFile->cd();
 
-  const int nBins = 25;
+  const int nBins = 100;
   const double maxPt = 100;
 
   TH1D *l1Pt = new TH1D("l1Pt",";L1 p_{T} (GeV)",nBins,0,maxPt);
@@ -135,16 +136,35 @@ void makeTurnPhotonOn_fromTree()
     double maxl1pt = maxisopt;
 
     double maxfpt = -1;
-    for(int i = 0; i < nGen; ++i)
+    for(int i = 0; i < nPhoton; ++i)
     {
-      if(TMath::Abs(gen_momId[i]) <= 22)
-      if(gen_id[i] == 22)
-      if(gen_iso[i] < 5)
-      if(gen_pt[i] > maxfpt)
-	maxfpt = gen_pt[i];
+      // if(TMath::Abs(gen_momId[i]) <= 22)
+      // if(gen_id[i] == 22)
+      // if(gen_iso[i] < 5)
+      // if(gen_pt[i] > maxfpt)
+      if(photon_pt[i] > maxfpt)
+      if((cc4[i] + cr4[i] + ct4PtCut20[i]) < 1)
+      if(TMath::Abs(photon_eta[i]) < 1.4791)
+      if(!isEle[i])
+      if(TMath::Abs(seedTime[i])<3)
+      if(swissCrx[i] < 0.9)
+      if(sigmaIetaIeta[i] > 0.002)
+      if(sigmaIphiIphi[i] > 0.002)
+      if(hadronicOverEm[i] < 0.1)
+	maxfpt = photon_pt[i];
     }
     //if(f_num > MAXJETS) std::cout << "TOO SMALL" << std::endl;
     l1Pt->Fill(maxl1pt);
+
+    // if(goodEvent && maxl1pt < 8 && maxfpt > 30)
+    // {
+    //   std::cout << "***********" << std::endl;
+    //   std::cout << "run lumi evt" << std::endl;
+    //   std::cout << run << " " << lumi << " " << evt << std::endl;
+    //   std::cout << "l1pt fpt" << std::endl;
+    //   std::cout << maxl1pt << " " << maxfpt << std::endl;
+    //   std::cout << "***********" << std::endl;
+    // }
 
     if(goodEvent)
     {

@@ -7,29 +7,30 @@
 
 void makeRateCurve()
 {
-  //const char *type = "akPu3CaloJets";
+  const char *type = "minbias_photon_rctCalibrations_v4_inc_reco";
   //TFile *inFile = TFile::Open(Form("hist_out_%s_cleaned.root",type));
   const int numfile = 2;
   TFile *inFile[numfile];
-  inFile[0] = TFile::Open("hist_hydjet_gen.root");
-  inFile[1] = TFile::Open("hist_hydjet_gen_v2.root");
-  //inFile[2] = TFile::Open("hist_dijet15_forward_gen.root");
+  inFile[0] = TFile::Open(Form("hist_%s.root",type));
+  inFile[1] = TFile::Open("hist_minbias_photon_rctCalibrations_v4_iso_reco.root");
+  // inFile[2] = TFile::Open("hist_minbias_forward_Pu.root");
 
   TH1D *counts[numfile];
   for(int i = 0; i < numfile; i++)
     counts[i] = (TH1D*)inFile[i]->Get("l1Pt");
 
-  const int nBins = 75;
-  const double maxPt = 300;
+  const int nBins = 100;
+  const double maxPt = 100;
 
   TH1D *rate[numfile];
-  rate[0] = new TH1D("rate",";L1 p_{T};Rate (w.r.t. PbPb 2011)",nBins,0,maxPt);
+  rate[0] = new TH1D("rate",";L1 p_{T};Rate (w.r.t. 2011)",nBins,0,maxPt);
   rate[1] = (TH1D*)rate[0]->Clone("1");
-  rate[2] = (TH1D*)rate[0]->Clone("2");
+  // rate[2] = (TH1D*)rate[0]->Clone("2");
 
   // double total_integral[2];
   // for(int i = 0; i < 2; i++)
   //   total_integral[i] = counts[i]->Integral();
+  double total_integral = counts[0]->Integral();
 
   for(int n = 0; n < numfile; n++)
   {
@@ -39,9 +40,9 @@ void makeRateCurve()
       //std::cout << j << std::endl;
       double integral = counts[n]->Integral(i+1, nBins);
       //std::cout << integral << std::endl;
-      //rate[n]->Fill(j, (double)integral/total_integral[n]);
-      rate[n]->Fill(j,integral);
-      //std::cout << (double)integral/total_integral << std::endl;
+      rate[n]->Fill(j, (double)integral/total_integral);
+      //rate[n]->Fill(j,integral);
+      std::cout << "Threshold: " << j << " Rate: " << (double)integral/total_integral << std::endl;
     }
   }
 
@@ -54,8 +55,8 @@ void makeRateCurve()
   rate[1]->SetLineColor(kRed);
   rate[1]->Draw("l same");
 
-  rate[2]->SetLineColor(kBlue);
-  rate[2]->Draw("l same");
+  // rate[2]->SetLineColor(kBlue);
+  // rate[2]->Draw("l same");
 
   TLegend *leg = new TLegend(0.5, 0.5, 0.8, 0.8);
   leg->SetFillColor(0);
@@ -63,9 +64,16 @@ void makeRateCurve()
   leg->SetTextSize(20);
 
   leg->AddEntry(rate[0],"inclusive", "l");
-  leg->AddEntry(rate[1],"central", "l");
-  leg->AddEntry(rate[2],"forward", "l");
+  leg->AddEntry(rate[1],"isolated", "l");
+  // leg->AddEntry(rate[2],"forward", "l");
   leg->Draw();
 
-  c1->SaveAs(Form("hydjet_gen_rate_v2.pdf"));
+  c1->SaveAs(Form("%s_rate.pdf",type));
+
+
+  // for(int i = 1; i < rate[0]->GetNbinsX(); ++i)
+  // {
+  //   std::cout << "Threshold: " << (i-1)*300/75 << "GeV "
+  // 	      << "Rate: " << rate[0]->GetBinContent(i) << std::endl;
+  // }
 }

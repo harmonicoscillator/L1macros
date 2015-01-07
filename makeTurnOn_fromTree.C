@@ -22,7 +22,8 @@ const Double_t L1_THRESHOLD[THRESHOLDS] = {12,16,20,24,28,32,40,52,60,80,100};
 
 void makeTurnOn_fromTree()
 {
-  TFile *inFile = TFile::Open("dijet15_compTree.root");
+  TFile *inFile = TFile::Open("minbias_data_compTree.root");
+  //TFile *inFile = TFile::Open("/export/d00/scratch/luck/jet55_data_compTree_combined.root");
   TTree *inTree = (TTree*)inFile->Get("l1_Pu_Vs_tree");
 
   Int_t run, lumi, evt;
@@ -35,8 +36,8 @@ void makeTurnOn_fromTree()
   Bool_t goodEvent;
   Int_t hiBin;
 
-  Int_t nGenJet;
-  Float_t genJet_pt[MAXJETS], genJet_eta[MAXJETS], genJet_phi[MAXJETS];
+  // Int_t nGenJet;
+  // Float_t genJet_pt[MAXJETS], genJet_eta[MAXJETS], genJet_phi[MAXJETS];
 
 
   inTree->SetBranchAddress("run",&run);
@@ -64,13 +65,13 @@ void makeTurnOn_fromTree()
   inTree->SetBranchAddress("VsJet_phi",VsJet_phi);
   inTree->SetBranchAddress("VsJet_rawpt",VsJet_rawpt);
 
-  inTree->SetBranchAddress("nGenJet",&nGenJet);
-  inTree->SetBranchAddress("genJet_pt",genJet_pt);
-  inTree->SetBranchAddress("genJet_eta",genJet_eta);
-  inTree->SetBranchAddress("genJet_phi",genJet_phi);
+  // inTree->SetBranchAddress("nGenJet",&nGenJet);
+  // inTree->SetBranchAddress("genJet_pt",genJet_pt);
+  // inTree->SetBranchAddress("genJet_eta",genJet_eta);
+  // inTree->SetBranchAddress("genJet_phi",genJet_phi);
 
 
-  TFile *outFile = new TFile(Form("hist_dijet15_central_gen.root"),"RECREATE");
+  TFile *outFile = new TFile(Form("hist_minbias_forward_inc_Pu.root"),"RECREATE");
   outFile->cd();
 
   const int nBins = 75;
@@ -99,8 +100,8 @@ void makeTurnOn_fromTree()
     inTree->GetEntry(j);
 
     double maxcenl1pt = -1;
-    //double maxforl1pt = -1;
-    //bool forfound = false;
+    double maxforl1pt = -1;
+    bool forfound = false;
     bool cenfound = false;
     for(int i = 0; i < nl1Jet; ++i)
     {
@@ -110,24 +111,24 @@ void makeTurnOn_fromTree()
       	cenfound = true;
       }
 
-      // if (!forfound && (l1Jet_hwQual[i] == 2) )
-      // {
-      // 	maxforl1pt = l1Jet_pt[i];
-      // 	forfound = true;
-      // }
+      if (!forfound && (l1Jet_hwQual[i] == 2) )
+      {
+      	maxforl1pt = l1Jet_pt[i];
+      	forfound = true;
+      }
 
-      //if(forfound && cenfound) break;
-      if(cenfound) break;
+      if(forfound && cenfound) break;
+      //if(cenfound) break;
     }
-    //double maxl1pt = std::max(maxcenl1pt, maxforl1pt);
-    double maxl1pt = maxcenl1pt;
+    double maxl1pt = std::max(maxcenl1pt, maxforl1pt);
+    //double maxl1pt = maxcenl1pt;
 
     double maxfpt = -1;
-    for(int i = 0; i < nGenJet; ++i)
+    for(int i = 0; i < nPuJet; ++i)
     {
-      if(TMath::Abs(genJet_eta[i]) < 2)
+      if(TMath::Abs(PuJet_eta[i]) > 2)
       {
-	maxfpt = genJet_pt[i];
+	maxfpt = PuJet_pt[i];
 	break;
       }
     }

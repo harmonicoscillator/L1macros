@@ -33,9 +33,11 @@ void matchedPhotonTree(bool montecarlo)
   //const TString l1_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/minbias_l1ntuple_HIPUM0.root";
   //const TString l1_input = "/export/d00/scratch/luck/dijet15_l1ntuple_20141022_v2.root";
   //const TString l1_input = "/export/d00/scratch/luck/photon30_l1ntuple_20141022_v2.root";
-  const TString l1_input = "/export/d00/scratch/luck/hydjet_l1ntuple_20141022_v2.root";
+  //const TString l1_input = "/export/d00/scratch/luck/hydjet_l1ntuple_20141022_v2.root";
   //const TString l1_input = "/export/d00/scratch/luck/jet55_data_l1ntuple_20141022.root";
   //const TString l1_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/jet55_data_l1ntuple_20141022.root";
+  // const TString l1_input = "/export/d00/scratch/luck/minbias_HI_v2.root";
+  const TString l1_input = "/export/d00/scratch/luck/minbias_HI_rctCalibrations_v4_partial.root";
 
   TFile *lFile = TFile::Open(l1_input);
   TTree *l1Tree = (TTree*)lFile->Get("L1UpgradeAnalyzer/L1UpgradeTree");
@@ -72,9 +74,10 @@ void matchedPhotonTree(bool montecarlo)
   //const TString forest_input = "/mnt/hadoop/cms/store/user/velicanu/HIMinBias2011_GR_R_53_LV6_CMSSW_5_3_16_Forest_Track8_Jet21/0.root";
   //const TString forest_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/minbiasForest_merged/0.root";
   //const TString forest_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/minbiasForest_merged_v2/HiForest_PbPb_Data_minbias_fromSkim.root";
+  const TString forest_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/minbiasForest_merged_v2/HiForest_PbPb_Data_minbias_fromSkim_v3.root";
   //const TString forest_input = "/mnt/hadoop/cms/store/user/dgulhan/PYTHIA_HYDJET_Track9_Jet30_Pyquen_DiJet_TuneZ2_Unquenched_Hydjet1p8_2760GeV_merged/HiForest_PYTHIA_HYDJET_pthat15_Track9_Jet30_matchEqR_merged_forest_0.root";
   //const TString forest_input = "/mnt/hadoop/cms/store/user/luck/2014-photon-forests/partial_PbPb_gammaJet_MC/HiForest_QCDPhoton30.root";
-  const TString forest_input = "/mnt/hadoop/cms/store/user/ginnocen/Hydjet1p8_TuneDrum_Quenched_MinBias_2760GeV/HiMinBias_Forest_26June2014/d9ab4aca1923b3220eacf8ee0d550950/*.root";
+  //const TString forest_input = "/mnt/hadoop/cms/store/user/ginnocen/Hydjet1p8_TuneDrum_Quenched_MinBias_2760GeV/HiMinBias_Forest_26June2014/d9ab4aca1923b3220eacf8ee0d550950/*.root";
   // TString forest_input[10];
   // TString base = "/mnt/hadoop/cms/store/user/belt/HiForest_jet55or65or80_JetRAA_v1_final/";
   // forest_input[0] = base + "HiForest_jet55or65or80_JetRAA_v1_lumi1_*.root";
@@ -100,12 +103,14 @@ void matchedPhotonTree(bool montecarlo)
   TChain *fEvtTree = new TChain("hiEvtAnalyzer/HiTree","fEvtTree");
   TChain *fSkimTree = new TChain("skimanalysis/HltTree","fSkimTree");
   TChain *fTree = new TChain("multiPhotonAnalyzer/photon");
+  TChain *fTrigTree = new TChain("hltanalysis/HltTree");
 
   // f1Tree->Add(forest_input[sampleNum]);
   // f2Tree->Add(forest_input[sampleNum]);
   fEvtTree->Add(forest_input);
   fSkimTree->Add(forest_input);
   fTree->Add(forest_input);
+  fTrigTree->Add(forest_input);
 
   Int_t f_evt, f_run, f_lumi;
   Float_t vz;
@@ -138,7 +143,7 @@ void matchedPhotonTree(bool montecarlo)
   Float_t genIso[MAXJETS];
   Int_t genId[MAXJETS], genMomId[MAXJETS];
 
-  
+
   // f1Tree->SetBranchAddress("nref",&f1_num);
   // f1Tree->SetBranchAddress("jtpt",f1_pt);
   // f1Tree->SetBranchAddress("jteta",f1_eta);
@@ -182,7 +187,22 @@ void matchedPhotonTree(bool montecarlo)
     fTree->SetBranchAddress("gpMomId",genMomId);
   }
 
-  TFile *outFile = new TFile(Form("hydjet_photon_compTree.root"),"RECREATE");
+  // triggers of interest
+  Int_t L1_SingleEG2_BptxAND, L1_SingleEG5_BptxAND, L1_SingleEG8_BptxAND, L1_SingleEG12;
+  Int_t HLT_HISinglePhoton20_v2, HLT_HISinglePhoton30_v2, HLT_HISinglePhoton40_v2;
+  Int_t HLT_HIJet55_v1;
+
+  fTrigTree->SetBranchAddress("L1_SingleEG2_BptxAND",&L1_SingleEG2_BptxAND);
+  fTrigTree->SetBranchAddress("L1_SingleEG5_BptxAND",&L1_SingleEG5_BptxAND);
+  fTrigTree->SetBranchAddress("L1_SingleEG8_BptxAND",&L1_SingleEG8_BptxAND);
+  fTrigTree->SetBranchAddress("L1_SingleEG12",&L1_SingleEG12);
+  fTrigTree->SetBranchAddress("HLT_HISinglePhoton20_v2",&HLT_HISinglePhoton20_v2);
+  fTrigTree->SetBranchAddress("HLT_HISinglePhoton30_v2",&HLT_HISinglePhoton30_v2);
+  fTrigTree->SetBranchAddress("HLT_HISinglePhoton40_v2",&HLT_HISinglePhoton40_v2);
+  fTrigTree->SetBranchAddress("HLT_HIJet55_v1",&HLT_HIJet55_v1);
+
+
+  TFile *outFile = new TFile(Form("minbias_photon_rctCalibrations_v4_compTree.root"),"RECREATE");
   TTree *outTree = new TTree("l1_photon_tree","l1_photon_tree");
 
   Int_t run, lumi, evt;
@@ -223,6 +243,11 @@ void matchedPhotonTree(bool montecarlo)
   Int_t gen_id[MAXJETS];
   Int_t gen_momId[MAXJETS];
 
+  Int_t L1_SingleEG2_BptxAND_, L1_SingleEG5_BptxAND_, L1_SingleEG8_BptxAND_, L1_SingleEG12_;
+  Int_t HLT_HISinglePhoton20_v2_, HLT_HISinglePhoton30_v2_, HLT_HISinglePhoton40_v2_;
+  Int_t HLT_HIJet55_v1_;
+
+
   outTree->Branch("run",&run,"run/I");
   outTree->Branch("lumi",&lumi,"lumi/I");
   outTree->Branch("evt",&evt,"evt/I");
@@ -261,7 +286,7 @@ void matchedPhotonTree(bool montecarlo)
   outTree->Branch("photon_pt",photon_pt,"photon_pt[nPhoton]/F");
   outTree->Branch("photon_eta",photon_eta,"photon_eta[nPhoton]/F");
   outTree->Branch("photon_phi",photon_phi,"photon_phi[nPhoton]/F");
- 
+
   outTree->Branch("cc4",photon_cc4,"cc4[nPhoton]/F");
   outTree->Branch("cr4",photon_cr4,"cr4[nPhoton]/F");
   outTree->Branch("ct4PtCut20",photon_ct4PtCut20,"ct4PtCut20[nPhoton]/F");
@@ -275,7 +300,7 @@ void matchedPhotonTree(bool montecarlo)
   outTree->Branch("swissCrx",photon_swissCrx,"swissCrx[nPhoton]/F");
   outTree->Branch("seedTime",photon_seedTime,"seedTime[nPhoton]/F");
 
-  
+
   if(montecarlo)
   {
     // outTree->Branch("nGenJet",&nGenJet,"nGenJet/I");
@@ -290,8 +315,17 @@ void matchedPhotonTree(bool montecarlo)
     outTree->Branch("gen_iso",gen_iso,"gen_iso[nGen]/F");
     outTree->Branch("gen_id",gen_id,"gen_id[nGen]/I");
     outTree->Branch("gen_momId",gen_momId,"gen_momId[nGen]/I");
-   
+
   }
+
+  outTree->Branch("L1_SingleEG2_BptxAND",&L1_SingleEG2_BptxAND_,"L1_SingleEG2_BptxAND/I");
+  outTree->Branch("L1_SingleEG5_BptxAND",&L1_SingleEG5_BptxAND_,"L1_SingleEG5_BptxAND/I");
+  outTree->Branch("L1_SingleEG8_BptxAND",&L1_SingleEG8_BptxAND_,"L1_SingleEG8_BptxAND/I");
+  outTree->Branch("L1_SingleEG12",&L1_SingleEG12_,"L1_SingleEG12/I");
+  outTree->Branch("HLT_HISinglePhoton20_v2",&HLT_HISinglePhoton20_v2_,"HLT_HISinglePhoton20_v2/I");
+  outTree->Branch("HLT_HISinglePhoton30_v2",&HLT_HISinglePhoton30_v2_,"HLT_HISinglePhoton30_v2/I");
+  outTree->Branch("HLT_HISinglePhoton40_v2",&HLT_HISinglePhoton40_v2_,"HLT_HISinglePhoton40_v2/I");
+  outTree->Branch("HLT_HIJet55_v1",&HLT_HIJet55_v1_,"HLT_HIJet55_v1/I");
 
   std::map<Long64_t, Long64_t> kmap;
 
@@ -350,6 +384,16 @@ void matchedPhotonTree(bool montecarlo)
 
 	l1Egamma_hwIso[i] = l1_hwIso[i];
       }
+
+      fTrigTree->GetEntry(j);
+      L1_SingleEG2_BptxAND_ = L1_SingleEG2_BptxAND;
+      L1_SingleEG5_BptxAND_ = L1_SingleEG5_BptxAND;
+      L1_SingleEG8_BptxAND_ = L1_SingleEG8_BptxAND;
+      L1_SingleEG12_ = L1_SingleEG12;
+      HLT_HISinglePhoton20_v2_ = HLT_HISinglePhoton20_v2;
+      HLT_HISinglePhoton30_v2_ = HLT_HISinglePhoton30_v2;
+      HLT_HISinglePhoton40_v2_ = HLT_HISinglePhoton40_v2;
+      HLT_HIJet55_v1_ = HLT_HIJet55_v1;
 
       // f1Tree->GetEntry(j);
       // f2Tree->GetEntry(j);
