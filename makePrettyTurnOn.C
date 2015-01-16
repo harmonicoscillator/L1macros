@@ -7,12 +7,12 @@
 
 void makePrettyTurnOn()
 {
-  const char *type = "minbias_photon_rctCalibrations_v4_inc_reco";
+  const char *type = "photon_iso_data";
   TFile *inFile = TFile::Open(Form("hist_%s.root",type));
 
-  const Int_t THRESHOLDS = 2;
-  const Double_t L1_THRESHOLD[THRESHOLDS] = {2, 5};
-  const Int_t COLORS[THRESHOLDS] = {kBlack, kRed};
+  const Int_t THRESHOLDS = 5;
+  const Double_t L1_THRESHOLD[THRESHOLDS] = {2, 4, 5, 8, 10};
+  const Int_t COLORS[THRESHOLDS] = {kBlack, kRed, kBlue, kGreen+3, kMagenta+3};
   const char* LABELS[2] = {"central", "periph"};
   TGraphAsymmErrors *asymm[THRESHOLDS][2];
 
@@ -30,7 +30,7 @@ void makePrettyTurnOn()
   const int nBins = 100;
   const double maxPt = 100;
 
-  TH1D *hEmpty = new TH1D("hEmpty",Form(";Offline Jet p_{T} (GeV);Efficiency"),nBins,0,maxPt);
+  TH1D *hEmpty = new TH1D("hEmpty",Form(";Offline Photon p_{T} (GeV);Efficiency"),nBins,0,maxPt);
 
   TCanvas *c1 = new TCanvas();
   hEmpty->SetMinimum(0);

@@ -7,12 +7,12 @@
 
 void makeRateCurve()
 {
-  const char *type = "minbias_photon_rctCalibrations_v4_inc_reco";
+  const char *type = "photon_data";
   //TFile *inFile = TFile::Open(Form("hist_out_%s_cleaned.root",type));
   const int numfile = 2;
   TFile *inFile[numfile];
   inFile[0] = TFile::Open(Form("hist_%s.root",type));
-  inFile[1] = TFile::Open("hist_minbias_photon_rctCalibrations_v4_iso_reco.root");
+  inFile[1] = TFile::Open("hist_photon_iso_data.root");
   // inFile[2] = TFile::Open("hist_minbias_forward_Pu.root");
 
   TH1D *counts[numfile];

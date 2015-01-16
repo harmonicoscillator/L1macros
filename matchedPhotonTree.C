@@ -16,6 +16,8 @@
 #include <iostream>
 #include <map>
 
+#include "CalculateIsolations.cc"
+
 const int MAXJETS = 500;
 //const Double_t L1_THRESHOLD[2] = {60, 100};
 //const Int_t THRESHOLDS = 2;
@@ -32,13 +34,13 @@ void matchedPhotonTree(bool montecarlo)
   //const TString l1_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/minbias_HI_and_PP_algos.root";
   //const TString l1_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/minbias_l1ntuple_HIPUM0.root";
   //const TString l1_input = "/export/d00/scratch/luck/dijet15_l1ntuple_20141022_v2.root";
-  //const TString l1_input = "/export/d00/scratch/luck/photon30_l1ntuple_20141022_v2.root";
+  //const TString l1_input = "/export/d00/scratch/luck/photon30_l1ntuple_20141022_v3.root";
   //const TString l1_input = "/export/d00/scratch/luck/hydjet_l1ntuple_20141022_v2.root";
   //const TString l1_input = "/export/d00/scratch/luck/jet55_data_l1ntuple_20141022.root";
   //const TString l1_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/jet55_data_l1ntuple_20141022.root";
   // const TString l1_input = "/export/d00/scratch/luck/minbias_HI_v2.root";
-  const TString l1_input = "/export/d00/scratch/luck/minbias_HI_rctCalibrations_v4_partial.root";
-
+  //const TString l1_input = "/export/d00/scratch/luck/minbias_HI_rctCalibrations_v4_partial.root";
+  const TString l1_input = "/export/d00/scratch/luck/photon_data_l1ntuple_v2.root";
   TFile *lFile = TFile::Open(l1_input);
   TTree *l1Tree = (TTree*)lFile->Get("L1UpgradeAnalyzer/L1UpgradeTree");
   //TTree *l1Tree = (TTree*)lFile->Get("HIdigis/L1UpgradeTree");
@@ -48,19 +50,25 @@ void matchedPhotonTree(bool montecarlo)
   Int_t l1_num;
   Int_t l1_hwPt[MAXJETS], l1_hwEta[MAXJETS], l1_hwPhi[MAXJETS], l1_hwQual[MAXJETS];
   Double_t l1_pt[MAXJETS], l1_eta[MAXJETS], l1_phi[MAXJETS];
-
   Int_t l1_hwIso[MAXJETS];
+
+  Int_t l1J_num;
+  Int_t l1J_hwPt[MAXJETS], l1J_hwEta[MAXJETS], l1J_hwPhi[MAXJETS], l1J_hwQual[MAXJETS];
+  Double_t l1J_pt[MAXJETS], l1J_eta[MAXJETS], l1J_phi[MAXJETS];
+
+  Int_t region_hwPt[396], region_hwEta[396], region_hwPhi[396];
+  Int_t emcand_hwPt[144], emcand_hwPhi[144], emcand_hwEta[144], emcand_hwIso[144];
 
   l1Tree->SetBranchAddress("event",&l1_event);
   l1Tree->SetBranchAddress("run",&l1_run);
-  // l1Tree->SetBranchAddress("nJet",&l1_num);
-  // l1Tree->SetBranchAddress("jet_hwPt",l1_hwPt);
-  // l1Tree->SetBranchAddress("jet_hwEta",l1_hwEta);
-  // l1Tree->SetBranchAddress("jet_hwPhi",l1_hwPhi);
-  // l1Tree->SetBranchAddress("jet_hwQual",l1_hwQual);
-  // l1Tree->SetBranchAddress("jet_pt",l1_pt);
-  // l1Tree->SetBranchAddress("jet_eta",l1_eta);
-  // l1Tree->SetBranchAddress("jet_phi",l1_phi);
+  l1Tree->SetBranchAddress("nJet",&l1J_num);
+  l1Tree->SetBranchAddress("jet_hwPt",l1J_hwPt);
+  l1Tree->SetBranchAddress("jet_hwEta",l1J_hwEta);
+  l1Tree->SetBranchAddress("jet_hwPhi",l1J_hwPhi);
+  l1Tree->SetBranchAddress("jet_hwQual",l1J_hwQual);
+  l1Tree->SetBranchAddress("jet_pt",l1J_pt);
+  l1Tree->SetBranchAddress("jet_eta",l1J_eta);
+  l1Tree->SetBranchAddress("jet_phi",l1J_phi);
   l1Tree->SetBranchAddress("nEgamma",&l1_num);
   l1Tree->SetBranchAddress("egamma_hwPt",l1_hwPt);
   l1Tree->SetBranchAddress("egamma_hwEta",l1_hwEta);
@@ -71,13 +79,22 @@ void matchedPhotonTree(bool montecarlo)
   l1Tree->SetBranchAddress("egamma_phi",l1_phi);
   l1Tree->SetBranchAddress("egamma_hwIso",l1_hwIso);
 
+  l1Tree->SetBranchAddress("region_hwPt", region_hwPt);
+  l1Tree->SetBranchAddress("region_hwEta", region_hwEta);
+  l1Tree->SetBranchAddress("region_hwPhi", region_hwPhi);
+  l1Tree->SetBranchAddress("emcand_hwPt", emcand_hwPt);
+  l1Tree->SetBranchAddress("emcand_hwEta", emcand_hwEta);
+  l1Tree->SetBranchAddress("emcand_hwPhi", emcand_hwPhi);
+  l1Tree->SetBranchAddress("emcand_hwIso", emcand_hwIso);
+
   //const TString forest_input = "/mnt/hadoop/cms/store/user/velicanu/HIMinBias2011_GR_R_53_LV6_CMSSW_5_3_16_Forest_Track8_Jet21/0.root";
   //const TString forest_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/minbiasForest_merged/0.root";
   //const TString forest_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/minbiasForest_merged_v2/HiForest_PbPb_Data_minbias_fromSkim.root";
-  const TString forest_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/minbiasForest_merged_v2/HiForest_PbPb_Data_minbias_fromSkim_v3.root";
+  //const TString forest_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/minbiasForest_merged_v2/HiForest_PbPb_Data_minbias_fromSkim_v3.root";
   //const TString forest_input = "/mnt/hadoop/cms/store/user/dgulhan/PYTHIA_HYDJET_Track9_Jet30_Pyquen_DiJet_TuneZ2_Unquenched_Hydjet1p8_2760GeV_merged/HiForest_PYTHIA_HYDJET_pthat15_Track9_Jet30_matchEqR_merged_forest_0.root";
   //const TString forest_input = "/mnt/hadoop/cms/store/user/luck/2014-photon-forests/partial_PbPb_gammaJet_MC/HiForest_QCDPhoton30.root";
   //const TString forest_input = "/mnt/hadoop/cms/store/user/ginnocen/Hydjet1p8_TuneDrum_Quenched_MinBias_2760GeV/HiMinBias_Forest_26June2014/d9ab4aca1923b3220eacf8ee0d550950/*.root";
+  const TString forest_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/HiForest_PbPb_photon2030.root";
   // TString forest_input[10];
   // TString base = "/mnt/hadoop/cms/store/user/belt/HiForest_jet55or65or80_JetRAA_v1_final/";
   // forest_input[0] = base + "HiForest_jet55or65or80_JetRAA_v1_lumi1_*.root";
@@ -202,14 +219,14 @@ void matchedPhotonTree(bool montecarlo)
   fTrigTree->SetBranchAddress("HLT_HIJet55_v1",&HLT_HIJet55_v1);
 
 
-  TFile *outFile = new TFile(Form("minbias_photon_rctCalibrations_v4_compTree.root"),"RECREATE");
+  TFile *outFile = new TFile(Form("photon_data_compTree.root"),"RECREATE");
   TTree *outTree = new TTree("l1_photon_tree","l1_photon_tree");
 
   Int_t run, lumi, evt;
 
-  // Int_t nl1Jet, nPuJet, nVsJet, nGenJet;
-  // Int_t l1Jet_hwPt[MAXJETS], l1Jet_hwEta[MAXJETS], l1Jet_hwPhi[MAXJETS], l1Jet_hwQual[MAXJETS];
-  // Float_t l1Jet_pt[MAXJETS], l1Jet_eta[MAXJETS], l1Jet_phi[MAXJETS];
+  Int_t nl1Jet;
+  Int_t l1Jet_hwPt[MAXJETS], l1Jet_hwEta[MAXJETS], l1Jet_hwPhi[MAXJETS], l1Jet_hwQual[MAXJETS];
+  Float_t l1Jet_pt[MAXJETS], l1Jet_eta[MAXJETS], l1Jet_phi[MAXJETS];
   // Float_t PuJet_pt[MAXJETS], PuJet_eta[MAXJETS], PuJet_phi[MAXJETS], PuJet_rawpt[MAXJETS];
   // Float_t VsJet_pt[MAXJETS], VsJet_eta[MAXJETS], VsJet_phi[MAXJETS], VsJet_rawpt[MAXJETS];
   // Float_t genJet_pt[MAXJETS], genJet_eta[MAXJETS], genJet_phi[MAXJETS];
@@ -221,6 +238,9 @@ void matchedPhotonTree(bool montecarlo)
   Int_t l1Egamma_hwIso[MAXJETS];
   Float_t l1Egamma_pt[MAXJETS], l1Egamma_eta[MAXJETS], l1Egamma_phi[MAXJETS];
 
+  Int_t emcand_hwPt_[144], emcand_hwPhi_[144], emcand_hwEta_[144], emcand_hwIso_[144];
+  Int_t iso3x3[144], isoCross[144], isoFourPoint[144], isoSingle[144], isoHolePunch[144];
+  
   Int_t nPhoton;
   Float_t photon_pt[MAXJETS];
   Float_t photon_eta[MAXJETS];
@@ -254,24 +274,14 @@ void matchedPhotonTree(bool montecarlo)
 
   outTree->Branch("goodEvent",&goodEvent,"goodEvent/O");
   outTree->Branch("hiBin",&hiBinOut,"hiBin/I");
-  // outTree->Branch("nl1Jet",&nl1Jet,"nl1Jet/I");
-  // outTree->Branch("nPuJet",&nPuJet,"nPuJet/I");
-  // outTree->Branch("nVsJet",&nVsJet,"nVsJet/I");
-  // outTree->Branch("l1Jet_hwPt",l1Jet_hwPt,"l1Jet_hwPt[nl1Jet]/I");
-  // outTree->Branch("l1Jet_hwEta",l1Jet_hwEta,"l1Jet_hwEta[nl1Jet]/I");
-  // outTree->Branch("l1Jet_hwPhi",l1Jet_hwPhi,"l1Jet_hwPhi[nl1Jet]/I");
-  // outTree->Branch("l1Jet_hwQual",l1Jet_hwQual,"l1Jet_hwQual[nl1Jet]/I");
-  // outTree->Branch("l1Jet_pt",l1Jet_pt,"l1Jet_pt[nl1Jet]/F");
-  // outTree->Branch("l1Jet_eta",l1Jet_eta,"l1Jet_eta[nl1Jet]/F");
-  // outTree->Branch("l1Jet_phi",l1Jet_phi,"l1Jet_phi[nl1Jet]/F");
-  // outTree->Branch("PuJet_pt",PuJet_pt,"PuJet_pt[nPuJet]/F");
-  // outTree->Branch("PuJet_eta",PuJet_eta,"PuJet_eta[nPuJet]/F");
-  // outTree->Branch("PuJet_phi",PuJet_phi,"PuJet_phi[nPuJet]/F");
-  // outTree->Branch("PuJet_rawpt",PuJet_rawpt,"PuJet_rawpt[nPuJet]/F");
-  // outTree->Branch("VsJet_pt",VsJet_pt,"VsJet_pt[nVsJet]/F");
-  // outTree->Branch("VsJet_eta",VsJet_eta,"VsJet_eta[nVsJet]/F");
-  // outTree->Branch("VsJet_phi",VsJet_phi,"VsJet_phi[nVsJet]/F");
-  // outTree->Branch("VsJet_rawpt",VsJet_rawpt,"VsJet_rawpt[nVsJet]/F");
+  outTree->Branch("nl1Jet",&nl1Jet,"nl1Jet/I");
+  outTree->Branch("l1Jet_hwPt",l1Jet_hwPt,"l1Jet_hwPt[nl1Jet]/I");
+  outTree->Branch("l1Jet_hwEta",l1Jet_hwEta,"l1Jet_hwEta[nl1Jet]/I");
+  outTree->Branch("l1Jet_hwPhi",l1Jet_hwPhi,"l1Jet_hwPhi[nl1Jet]/I");
+  outTree->Branch("l1Jet_hwQual",l1Jet_hwQual,"l1Jet_hwQual[nl1Jet]/I");
+  outTree->Branch("l1Jet_pt",l1Jet_pt,"l1Jet_pt[nl1Jet]/F");
+  outTree->Branch("l1Jet_eta",l1Jet_eta,"l1Jet_eta[nl1Jet]/F");
+  outTree->Branch("l1Jet_phi",l1Jet_phi,"l1Jet_phi[nl1Jet]/F");
   outTree->Branch("nl1Egamma",&nl1Egamma,"nl1Egamma/I");
   outTree->Branch("l1Egamma_hwPt",l1Egamma_hwPt,"l1Egamma_hwPt[nl1Egamma]/I");
   outTree->Branch("l1Egamma_hwEta",l1Egamma_hwEta,"l1Egamma_hwEta[nl1Egamma]/I");
@@ -282,6 +292,16 @@ void matchedPhotonTree(bool montecarlo)
   outTree->Branch("l1Egamma_eta",l1Egamma_eta,"l1Egamma_eta[nl1Egamma]/F");
   outTree->Branch("l1Egamma_phi",l1Egamma_phi,"l1Egamma_phi[nl1Egamma]/F");
 
+  outTree->Branch("emcand_hwPt",emcand_hwPt_,"emcand_hwPt[144]/I");
+  outTree->Branch("emcand_hwPhi",emcand_hwPhi_,"emcand_hwPhi[144]/I");
+  outTree->Branch("emcand_hwEta",emcand_hwEta_,"emcand_hwEta[144]/I");
+  outTree->Branch("emcand_hwIso",emcand_hwIso_,"emcand_hwIso[144]/I");
+  outTree->Branch("iso3x3",iso3x3,"iso3x3[144]/I");
+  outTree->Branch("isoCross",isoCross,"isoCross[144]/I");
+  outTree->Branch("isoFourPoint",isoFourPoint,"isoFourPoint[144]/I");
+  outTree->Branch("isoSingle",isoSingle,"isoSingle[144]/I");
+  outTree->Branch("isoHolePunch",isoHolePunch,"isoHolePunch[144]/I");
+  
   outTree->Branch("nPhoton",&nPhoton,"nPhoton/I");
   outTree->Branch("photon_pt",photon_pt,"photon_pt[nPhoton]/F");
   outTree->Branch("photon_eta",photon_eta,"photon_eta[nPhoton]/F");
@@ -370,6 +390,20 @@ void matchedPhotonTree(bool montecarlo)
       evt = f_evt;
       hiBinOut = hiBin;
 
+      nl1Jet = l1J_num;
+      for(int i = 0; i < l1J_num; i++)
+      {
+	l1Jet_hwPt[i] = l1J_hwPt[i];
+	l1Jet_hwEta[i] = l1J_hwEta[i];
+	l1Jet_hwPhi[i] = l1J_hwPhi[i];
+	l1Jet_hwQual[i] = l1J_hwQual[i];
+
+	l1Jet_pt[i] = l1J_pt[i];
+	l1Jet_eta[i] = l1J_eta[i];
+	l1Jet_phi[i] = l1J_phi[i];
+      }
+
+
       nl1Egamma = l1_num;
       for(int i = 0; i < l1_num; i++)
       {
@@ -383,6 +417,23 @@ void matchedPhotonTree(bool montecarlo)
 	l1Egamma_phi[i] = l1_phi[i];
 
 	l1Egamma_hwIso[i] = l1_hwIso[i];
+      }
+
+      // emcand info and iso
+      Isolation isocal;
+      isocal.FillRegions(region_hwPt, region_hwEta, region_hwPhi);
+      for(int i = 0; i < 144; ++i)
+      {
+	emcand_hwPt_[i] = emcand_hwPt[i];
+	emcand_hwEta_[i] = emcand_hwEta[i];
+	emcand_hwPhi_[i] = emcand_hwPhi[i];
+	emcand_hwIso_[i] = emcand_hwIso_[i];
+
+	iso3x3[i] = isocal.iso3x3(emcand_hwEta_[i], emcand_hwPhi_[i]);
+	isoCross[i] = isocal.isoCross(emcand_hwEta_[i], emcand_hwPhi_[i]);
+	isoFourPoint[i] = isocal.isoFourPoint(emcand_hwEta_[i], emcand_hwPhi_[i]);
+	isoSingle[i] = isocal.isoSingle(emcand_hwEta_[i], emcand_hwPhi_[i]);
+	isoHolePunch[i] = isocal.isoHolePunch(emcand_hwEta_[i], emcand_hwPhi_[i]);
       }
 
       fTrigTree->GetEntry(j);

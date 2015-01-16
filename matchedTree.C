@@ -33,9 +33,10 @@ void matchedPhotonTree(bool montecarlo)
   //const TString l1_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/minbias_l1ntuple_HIPUM0.root";
   //const TString l1_input = "/export/d00/scratch/luck/dijet15_l1ntuple_20141022_v2.root";
   //const TString l1_input = "/export/d00/scratch/luck/photon30_l1ntuple_20141022_v2.root";
-  const TString l1_input = "/export/d00/scratch/luck/hydjet_l1ntuple_20141022_v2.root";
+  //const TString l1_input = "/export/d00/scratch/luck/hydjet_l1ntuple_20141022_v2.root";
   //const TString l1_input = "/export/d00/scratch/luck/jet55_data_l1ntuple_20141022.root";
   //const TString l1_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/jet55_data_l1ntuple_20141022.root";
+  const TString l1_input = "/export/d00/scratch/luck/photon_data_l1ntuple.root";
 
   TFile *lFile = TFile::Open(l1_input);
   TTree *l1Tree = (TTree*)lFile->Get("L1UpgradeAnalyzer/L1UpgradeTree");
@@ -74,7 +75,8 @@ void matchedPhotonTree(bool montecarlo)
   //const TString forest_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/minbiasForest_merged_v2/HiForest_PbPb_Data_minbias_fromSkim.root";
   //const TString forest_input = "/mnt/hadoop/cms/store/user/dgulhan/PYTHIA_HYDJET_Track9_Jet30_Pyquen_DiJet_TuneZ2_Unquenched_Hydjet1p8_2760GeV_merged/HiForest_PYTHIA_HYDJET_pthat15_Track9_Jet30_matchEqR_merged_forest_0.root";
   //const TString forest_input = "/mnt/hadoop/cms/store/user/luck/2014-photon-forests/partial_PbPb_gammaJet_MC/HiForest_QCDPhoton30.root";
-  const TString forest_input = "/mnt/hadoop/cms/store/user/ginnocen/Hydjet1p8_TuneDrum_Quenched_MinBias_2760GeV/HiMinBias_Forest_26June2014/d9ab4aca1923b3220eacf8ee0d550950/*.root";
+  //const TString forest_input = "/mnt/hadoop/cms/store/user/ginnocen/Hydjet1p8_TuneDrum_Quenched_MinBias_2760GeV/HiMinBias_Forest_26June2014/d9ab4aca1923b3220eacf8ee0d550950/*.root";
+  const TString forest_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/PhotonTrigForests_v1/0.root";
   // TString forest_input[10];
   // TString base = "/mnt/hadoop/cms/store/user/belt/HiForest_jet55or65or80_JetRAA_v1_final/";
   // forest_input[0] = base + "HiForest_jet55or65or80_JetRAA_v1_lumi1_*.root";
