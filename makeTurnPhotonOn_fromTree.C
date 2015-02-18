@@ -18,7 +18,7 @@
 
 const int MAXJETS = 500;
 const Int_t THRESHOLDS = 8;
-const Double_t L1_THRESHOLD[THRESHOLDS] = {2, 4, 5, 6, 7, 8, 10, 12};
+const Double_t L1_THRESHOLD[THRESHOLDS] = {2,5,8,12,16,20,24,28};
 
 double getPhysicalEta(int gtEta)
 {
@@ -55,7 +55,7 @@ double getPhysicalPhi(int phiIndex)
 
 void makeTurnPhotonOn_fromTree()
 {
-  TFile *inFile = TFile::Open("photon_data_compTree.root");
+  TFile *inFile = TFile::Open("photon_data_noHCAL_compTree.root");
   //TFile *inFile = TFile::Open("/export/d00/scratch/luck/jet55_data_compTree_combined.root");
   TTree *inTree = (TTree*)inFile->Get("l1_photon_tree");
 
@@ -72,6 +72,8 @@ void makeTurnPhotonOn_fromTree()
 
   Int_t emcand_hwPt[144], emcand_hwPhi[144], emcand_hwEta[144], emcand_hwIso[144];
   Int_t iso3x3[144], isoCross[144], isoFourPoint[144], isoSingle[144], isoHolePunch[144];
+
+  Int_t region_hwPt[396], region_hwEta[396], region_hwPhi[396];
 
   Int_t nPhoton;
   Float_t photon_pt[MAXJETS];
@@ -92,6 +94,9 @@ void makeTurnPhotonOn_fromTree()
 
   Bool_t goodEvent;
   Int_t hiBin;
+
+  Int_t L1_SingleEG2_BptxAND, L1_SingleEG5_BptxAND, L1_SingleEG8_BptxAND, L1_SingleEG12;
+
 
   inTree->SetBranchAddress("run",&run);
   inTree->SetBranchAddress("lumi",&lumi);
@@ -129,6 +134,9 @@ void makeTurnPhotonOn_fromTree()
   inTree->SetBranchAddress("isoSingle",isoSingle);
   inTree->SetBranchAddress("isoHolePunch",isoHolePunch);
 
+  inTree->SetBranchAddress("region_hwPt",region_hwPt);
+  inTree->SetBranchAddress("region_hwPhi",region_hwPhi);
+  inTree->SetBranchAddress("region_hwEta",region_hwEta);
 
   inTree->SetBranchAddress("nPhoton",&nPhoton);
   inTree->SetBranchAddress("photon_pt",photon_pt);
@@ -148,6 +156,12 @@ void makeTurnPhotonOn_fromTree()
   inTree->SetBranchAddress("swissCrx",swissCrx);
   inTree->SetBranchAddress("seedTime",seedTime);
 
+  inTree->SetBranchAddress("L1_SingleEG2_BptxAND", &L1_SingleEG2_BptxAND);
+  inTree->SetBranchAddress("L1_SingleEG5_BptxAND", &L1_SingleEG5_BptxAND);
+  inTree->SetBranchAddress("L1_SingleEG8_BptxAND", &L1_SingleEG8_BptxAND);
+  inTree->SetBranchAddress("L1_SingleEG12", &L1_SingleEG12);
+
+
   // Int_t nGen;
   // Float_t gen_pt[MAXJETS], gen_eta[MAXJETS];//, gen_phi[MAXJETS];
   // Float_t gen_iso[MAXJETS];
@@ -162,27 +176,28 @@ void makeTurnPhotonOn_fromTree()
   // inTree->SetBranchAddress("gen_momId",gen_momId);
 
 
-  TFile *outFile = new TFile(Form("hist_photon_iso_data.root"),"RECREATE");
+  TFile *outFile = new TFile(Form("hist_photon_data_noHCAL.root"),"RECREATE");
   outFile->cd();
 
   const int nBins = 50;
   const double maxPt = 100;
 
   TH1D *l1Pt = new TH1D("l1Pt",";L1 p_{T} (GeV)",nBins,0,maxPt);
-  TH1D *fPt[2];
-  fPt[0] = new TH1D("fPt_cen",";offline p_{T} (GeV)",nBins,0,maxPt);
-  fPt[1] = (TH1D*)fPt[0]->Clone("fPt_periph");
-  TH1D *accepted[THRESHOLDS][2];
+  TH1D *fPt[3];
+  fPt[0] = new TH1D("fPt",";offline p_{T} (GeV)",nBins,0,maxPt);
+  fPt[1] = (TH1D*)fPt[0]->Clone("fPt_cen");
+  fPt[2] = (TH1D*)fPt[0]->Clone("fPt_periph");
+  TH1D *accepted[THRESHOLDS][3];
   TH1D *isoDistribution = new TH1D("isoDistribution",";isolation energy (GeV)",100, -5, 45);
   TH1D *badIsoDistribution = (TH1D*)isoDistribution->Clone("badIsoDistribution");
 
   TH1D *jetSpectra = new TH1D("jetSpectra","l1 jet (GeV)",64, 0, 256);
   TH1D *badJetSpectra = (TH1D*)jetSpectra->Clone("badJetSpectra");
   TH1D *goodJetSpectra = (TH1D*)jetSpectra->Clone("goodJetSpectra");
-  
+
 
   for(int i = 0; i < THRESHOLDS; ++i)
-    for(int j = 0; j < 2; ++j)
+    for(int j = 0; j < 3; ++j)
     {
       accepted[i][j] = new TH1D(Form("accepted_pt%d_%d",(int)L1_THRESHOLD[i],j),";offline p_{T}",nBins,0,maxPt);
     }
@@ -190,6 +205,7 @@ void makeTurnPhotonOn_fromTree()
   TH2D *corr = new TH2D("corr",";offline p_{T};l1 p_{T}",nBins,0,maxPt,nBins,0,maxPt);
   TH2D *matching = new TH2D("matching",";#Delta #eta;#Delta #phi",100,-5,5,100,0, TMath::Pi() );
   TH2D *matched_bad = (TH2D*)matching->Clone("matched_bad");
+  TH2D *absolute_position = new TH2D("absolute_position",";#eta;#phi",50,-5,5,50,-TMath::Pi(), TMath::Pi());
 
   Long64_t entries = inTree->GetEntries();
   for(Long64_t j = 0; j < entries; ++j)
@@ -204,21 +220,48 @@ void makeTurnPhotonOn_fromTree()
     double maxl1pt = -1;
     double iso = -999;
 
-    for(int i = 0; i < 144; ++i)
-    {
-      if( emcand_hwPt[i] > maxl1pt)
-	if( ((0.5*iso3x3[i])-emcand_hwPt[i]) < 1.0 ) // 0.5 factor to convert to GeV, hacky
-	{
-	  maxl1pt = emcand_hwPt[i];
-	  maxl1eta = getPhysicalEta(emcand_hwEta[i]);
-	  maxl1phi = getPhysicalPhi(emcand_hwPhi[i]);
-	  iso = (0.5*iso3x3[i])-emcand_hwPt[i];
-	}
-    }
+    //match to RCT candidates
+    // for(int i = 0; i < 144; ++i)
+    // {
+    //   if( emcand_hwPt[i] > maxl1pt)
+    //   	//if( ((0.5*iso3x3[i])-emcand_hwPt[i]) < 1.0 ) // 0.5 factor to convert to GeV, hacky
+    //   {
+    // 	maxl1pt = emcand_hwPt[i];
+    // 	maxl1eta = getPhysicalEta(emcand_hwEta[i]);
+    // 	maxl1phi = getPhysicalPhi(emcand_hwPhi[i]);
+    // 	iso = (0.5*iso3x3[i])-emcand_hwPt[i];
+    //   }
+
+    // }
+
+    // match to Layer 2 EGammas
     // double maxisopt = l1Egamma_pt[0];
     // double maxnonisopt = l1Egamma_pt[4];
-    // double maxl1pt = std::max(maxisopt, maxnonisopt);
+    // maxl1pt = std::max(maxisopt, maxnonisopt);
     //double maxl1pt = maxisopt;
+
+    //match to Layer 2 jets
+    // for(int i = 0; i < nl1Jet; ++i)
+    // {
+    //   if(l1Jet_pt[i] > maxl1pt)
+    //   {
+    // 	maxl1eta = l1Jet_eta[i];
+    // 	maxl1phi = l1Jet_phi[i];
+    // 	maxl1pt = l1Jet_pt[i];
+    // 	iso = 0;
+    //   }
+    // }
+
+    //match to regions
+    for(int i = 0; i < 396; ++i)
+    {
+      if(region_hwPt[i] > maxl1pt)
+      {
+	maxl1pt = region_hwPt[i];
+ 	maxl1eta = getPhysicalEta(region_hwEta[i]);
+     	maxl1phi = getPhysicalPhi(region_hwPhi[i]);
+      }
+    }
 
     double maxfpt = -1;
     double maxfeta = -999;
@@ -259,10 +302,11 @@ void makeTurnPhotonOn_fromTree()
 
     if(goodEvent)
     {
+      fPt[0]->Fill(maxfpt);
       if(hiBin < 60)
-	fPt[0]->Fill(maxfpt);
-      else if (hiBin >= 100)
 	fPt[1]->Fill(maxfpt);
+      else if (hiBin >= 100)
+	fPt[2]->Fill(maxfpt);
 
       corr->Fill(maxfpt,maxl1pt);
       double diffphi = TMath::Abs(maxfphi-maxl1phi);
@@ -273,10 +317,11 @@ void makeTurnPhotonOn_fromTree()
       isoDistribution->Fill(iso);
       jetSpectra->Fill(l1Jet_pt[0]);
 
-      if(maxl1pt <= 5 && maxfpt > 40)
+      if(maxl1pt <= 8 && maxfpt > 40)
       {
-	matched_bad->Fill(maxfeta-maxl1eta, diffphi);
+	matched_bad->Fill(diffeta, diffphi);
 	goodJetSpectra->Fill(l1Jet_pt[0]);
+	absolute_position->Fill(maxfeta, maxfphi);
       }
       //double deltaR = TMath::Sqrt(diffphi*diffphi + diffeta*diffeta);
       //if(deltaR > 0.5)
@@ -288,20 +333,39 @@ void makeTurnPhotonOn_fromTree()
 
       for(int k = 0; k < THRESHOLDS; ++k)
       {
-	if(maxl1pt>L1_THRESHOLD[k] || l1Jet_pt[0] > 36)
+	if(maxl1pt>L1_THRESHOLD[k])
 	{
+	// int threshold = 0;
+	// switch(k)
+	// {
+	// case 0:
+	//   threshold = L1_SingleEG2_BptxAND;
+	//   break;
+	// case 1:
+	//   threshold = L1_SingleEG5_BptxAND;
+	//   break;
+	// case 2:
+	//   threshold = L1_SingleEG8_BptxAND;
+	//   break;
+	// case 3:
+	//   threshold = L1_SingleEG12;
+	//   break;
+	// }
+	// if(threshold)
+	// {
+	  accepted[k][0]->Fill(maxfpt);
 	  if(hiBin < 60)
-	    accepted[k][0]->Fill(maxfpt);
-	  else if (hiBin >= 100)
 	    accepted[k][1]->Fill(maxfpt);
+	  else if (hiBin >= 100)
+	    accepted[k][2]->Fill(maxfpt);
 	}
       }
     }
   }
 
-  TGraphAsymmErrors *a[4][2];
+  TGraphAsymmErrors *a[4][3];
   for(int k = 0; k < THRESHOLDS; ++k){
-    for(int l = 0; l < 2; ++l)
+    for(int l = 0; l < 3; ++l)
     {
       a[k][l] = new TGraphAsymmErrors();
       a[k][l]->BayesDivide(accepted[k][l],fPt[l]);
@@ -312,6 +376,7 @@ void makeTurnPhotonOn_fromTree()
   l1Pt->Write();
   fPt[0]->Write();
   fPt[1]->Write();
+  fPt[2]->Write();
   corr->Write();
   matching->Write();
   matched_bad->Write();
@@ -320,8 +385,9 @@ void makeTurnPhotonOn_fromTree()
   jetSpectra->Write();
   badJetSpectra->Write();
   goodJetSpectra->Write();
+  absolute_position->Write();
   for(int k = 0; k < THRESHOLDS; ++k){
-    for(int l = 0; l < 2; ++l)
+    for(int l = 0; l < 3; ++l)
     {
       accepted[k][l]->Write();
       a[k][l]->Write();

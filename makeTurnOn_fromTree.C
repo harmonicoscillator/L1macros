@@ -36,6 +36,8 @@ void makeTurnOn_fromTree()
   Bool_t goodEvent;
   Int_t hiBin;
 
+  Int_t L1_SingleEG2_BptxAND, L1_SingleEG5_BptxAND, L1_SingleEG8_BptxAND, L1_SingleEG12;
+
   // Int_t nGenJet;
   // Float_t genJet_pt[MAXJETS], genJet_eta[MAXJETS], genJet_phi[MAXJETS];
 
@@ -69,6 +71,11 @@ void makeTurnOn_fromTree()
   // inTree->SetBranchAddress("genJet_pt",genJet_pt);
   // inTree->SetBranchAddress("genJet_eta",genJet_eta);
   // inTree->SetBranchAddress("genJet_phi",genJet_phi);
+
+  inTree->SetBranchAddress("L1_SingleEG2_BptxAND", &L1_SingleEG2_BptxAND);
+  inTree->SetBranchAddress("L1_SingleEG5_BptxAND", &L1_SingleEG5_BptxAND);
+  inTree->SetBranchAddress("L1_SingleEG8_BptxAND", &L1_SingleEG8_BptxAND);
+  inTree->SetBranchAddress("L1_SingleEG12", &L1_SingleEG12);
 
 
   TFile *outFile = new TFile(Form("hist_minbias_forward_inc_Pu.root"),"RECREATE");

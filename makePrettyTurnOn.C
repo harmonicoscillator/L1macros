@@ -7,12 +7,12 @@
 
 void makePrettyTurnOn()
 {
-  const char *type = "photon_iso_data";
+  const char *type = "minbias_photon_data";
   TFile *inFile = TFile::Open(Form("hist_%s.root",type));
 
-  const Int_t THRESHOLDS = 5;
-  const Double_t L1_THRESHOLD[THRESHOLDS] = {2, 4, 5, 8, 10};
-  const Int_t COLORS[THRESHOLDS] = {kBlack, kRed, kBlue, kGreen+3, kMagenta+3};
+  const Int_t THRESHOLDS = 4;
+  const Double_t L1_THRESHOLD[THRESHOLDS] = {2, 5, 8, 12};
+  const Int_t COLORS[THRESHOLDS] = {kBlack, kRed, kBlue, kGreen+3};//, kMagenta+3};
   const char* LABELS[2] = {"central", "periph"};
   TGraphAsymmErrors *asymm[THRESHOLDS][2];
 
@@ -20,7 +20,7 @@ void makePrettyTurnOn()
   {
     for(int j = 0; j < 2; j++)
     {
-      asymm[i][j] = (TGraphAsymmErrors*)inFile->Get(Form("asymm_pt_%d_%d",(int)L1_THRESHOLD[i],j));
+      asymm[i][j] = (TGraphAsymmErrors*)inFile->Get(Form("asymm_pt_%d_%d",(int)L1_THRESHOLD[i],j+1));
       asymm[i][j]->SetMarkerColor(COLORS[i]);
       asymm[i][j]->SetLineColor(COLORS[i]);
     }
@@ -58,7 +58,7 @@ void makePrettyTurnOn()
   {
     for(int j = 0; j < 2; j++)
     {
-      leg->AddEntry(asymm[i][j], Form("Thresh. %d, %s", (int)L1_THRESHOLD[i], LABELS[j]), "lp");
+      leg->AddEntry(asymm[i][j], Form("Upgrade RCT %d, %s", (int)L1_THRESHOLD[i], LABELS[j]), "lp");
     }
   }
 

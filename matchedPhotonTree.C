@@ -40,7 +40,9 @@ void matchedPhotonTree(bool montecarlo)
   //const TString l1_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/jet55_data_l1ntuple_20141022.root";
   // const TString l1_input = "/export/d00/scratch/luck/minbias_HI_v2.root";
   //const TString l1_input = "/export/d00/scratch/luck/minbias_HI_rctCalibrations_v4_partial.root";
-  const TString l1_input = "/export/d00/scratch/luck/photon_data_l1ntuple_v2.root";
+  //const TString l1_input = "/export/d00/scratch/luck/photon_data_l1ntuple_v2.root";
+  const TString l1_input = "/export/d00/scratch/luck/photon_data_l1ntuple_noHCAL.root";
+  //const TString l1_input = "/export/d00/scratch/luck/minbias_hydjet_l1ntuple.root";
   TFile *lFile = TFile::Open(l1_input);
   TTree *l1Tree = (TTree*)lFile->Get("L1UpgradeAnalyzer/L1UpgradeTree");
   //TTree *l1Tree = (TTree*)lFile->Get("HIdigis/L1UpgradeTree");
@@ -95,6 +97,7 @@ void matchedPhotonTree(bool montecarlo)
   //const TString forest_input = "/mnt/hadoop/cms/store/user/luck/2014-photon-forests/partial_PbPb_gammaJet_MC/HiForest_QCDPhoton30.root";
   //const TString forest_input = "/mnt/hadoop/cms/store/user/ginnocen/Hydjet1p8_TuneDrum_Quenched_MinBias_2760GeV/HiMinBias_Forest_26June2014/d9ab4aca1923b3220eacf8ee0d550950/*.root";
   const TString forest_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/HiForest_PbPb_photon2030.root";
+  //const TString forest_input = "/mnt/hadoop/cms/store/user/dgulhan/HiForest_HydjetMB_730_53XBS/*.root";
   // TString forest_input[10];
   // TString base = "/mnt/hadoop/cms/store/user/belt/HiForest_jet55or65or80_JetRAA_v1_final/";
   // forest_input[0] = base + "HiForest_jet55or65or80_JetRAA_v1_lumi1_*.root";
@@ -204,22 +207,22 @@ void matchedPhotonTree(bool montecarlo)
     fTree->SetBranchAddress("gpMomId",genMomId);
   }
 
-  // triggers of interest
-  Int_t L1_SingleEG2_BptxAND, L1_SingleEG5_BptxAND, L1_SingleEG8_BptxAND, L1_SingleEG12;
-  Int_t HLT_HISinglePhoton20_v2, HLT_HISinglePhoton30_v2, HLT_HISinglePhoton40_v2;
-  Int_t HLT_HIJet55_v1;
+  // // triggers of interest
+  // Int_t L1_SingleEG2_BptxAND, L1_SingleEG5_BptxAND, L1_SingleEG8_BptxAND, L1_SingleEG12;
+  // Int_t HLT_HISinglePhoton20_v2, HLT_HISinglePhoton30_v2, HLT_HISinglePhoton40_v2;
+  // Int_t HLT_HIJet55_v1;
 
-  fTrigTree->SetBranchAddress("L1_SingleEG2_BptxAND",&L1_SingleEG2_BptxAND);
-  fTrigTree->SetBranchAddress("L1_SingleEG5_BptxAND",&L1_SingleEG5_BptxAND);
-  fTrigTree->SetBranchAddress("L1_SingleEG8_BptxAND",&L1_SingleEG8_BptxAND);
-  fTrigTree->SetBranchAddress("L1_SingleEG12",&L1_SingleEG12);
-  fTrigTree->SetBranchAddress("HLT_HISinglePhoton20_v2",&HLT_HISinglePhoton20_v2);
-  fTrigTree->SetBranchAddress("HLT_HISinglePhoton30_v2",&HLT_HISinglePhoton30_v2);
-  fTrigTree->SetBranchAddress("HLT_HISinglePhoton40_v2",&HLT_HISinglePhoton40_v2);
-  fTrigTree->SetBranchAddress("HLT_HIJet55_v1",&HLT_HIJet55_v1);
+  // fTrigTree->SetBranchAddress("L1_SingleEG2_BptxAND",&L1_SingleEG2_BptxAND);
+  // fTrigTree->SetBranchAddress("L1_SingleEG5_BptxAND",&L1_SingleEG5_BptxAND);
+  // fTrigTree->SetBranchAddress("L1_SingleEG8_BptxAND",&L1_SingleEG8_BptxAND);
+  // fTrigTree->SetBranchAddress("L1_SingleEG12",&L1_SingleEG12);
+  // fTrigTree->SetBranchAddress("HLT_HISinglePhoton20_v2",&HLT_HISinglePhoton20_v2);
+  // fTrigTree->SetBranchAddress("HLT_HISinglePhoton30_v2",&HLT_HISinglePhoton30_v2);
+  // fTrigTree->SetBranchAddress("HLT_HISinglePhoton40_v2",&HLT_HISinglePhoton40_v2);
+  // fTrigTree->SetBranchAddress("HLT_HIJet55_v1",&HLT_HIJet55_v1);
 
 
-  TFile *outFile = new TFile(Form("photon_data_compTree.root"),"RECREATE");
+  TFile *outFile = new TFile(Form("photon_data_noHCAL_compTree.root"),"RECREATE");
   TTree *outTree = new TTree("l1_photon_tree","l1_photon_tree");
 
   Int_t run, lumi, evt;
@@ -240,7 +243,9 @@ void matchedPhotonTree(bool montecarlo)
 
   Int_t emcand_hwPt_[144], emcand_hwPhi_[144], emcand_hwEta_[144], emcand_hwIso_[144];
   Int_t iso3x3[144], isoCross[144], isoFourPoint[144], isoSingle[144], isoHolePunch[144];
-  
+
+  Int_t region_hwPt_[396], region_hwPhi_[396], region_hwEta_[396];
+
   Int_t nPhoton;
   Float_t photon_pt[MAXJETS];
   Float_t photon_eta[MAXJETS];
@@ -263,9 +268,9 @@ void matchedPhotonTree(bool montecarlo)
   Int_t gen_id[MAXJETS];
   Int_t gen_momId[MAXJETS];
 
-  Int_t L1_SingleEG2_BptxAND_, L1_SingleEG5_BptxAND_, L1_SingleEG8_BptxAND_, L1_SingleEG12_;
-  Int_t HLT_HISinglePhoton20_v2_, HLT_HISinglePhoton30_v2_, HLT_HISinglePhoton40_v2_;
-  Int_t HLT_HIJet55_v1_;
+  // Int_t L1_SingleEG2_BptxAND_, L1_SingleEG5_BptxAND_, L1_SingleEG8_BptxAND_, L1_SingleEG12_;
+  // Int_t HLT_HISinglePhoton20_v2_, HLT_HISinglePhoton30_v2_, HLT_HISinglePhoton40_v2_;
+  // Int_t HLT_HIJet55_v1_;
 
 
   outTree->Branch("run",&run,"run/I");
@@ -301,7 +306,11 @@ void matchedPhotonTree(bool montecarlo)
   outTree->Branch("isoFourPoint",isoFourPoint,"isoFourPoint[144]/I");
   outTree->Branch("isoSingle",isoSingle,"isoSingle[144]/I");
   outTree->Branch("isoHolePunch",isoHolePunch,"isoHolePunch[144]/I");
-  
+
+  outTree->Branch("region_hwPt",region_hwPt_,"region_hwPt[396]/I");
+  outTree->Branch("region_hwPhi",region_hwPhi_,"region_hwPhi[396]/I");
+  outTree->Branch("region_hwEta",region_hwEta_,"region_hwEta[396]/I");
+
   outTree->Branch("nPhoton",&nPhoton,"nPhoton/I");
   outTree->Branch("photon_pt",photon_pt,"photon_pt[nPhoton]/F");
   outTree->Branch("photon_eta",photon_eta,"photon_eta[nPhoton]/F");
@@ -338,14 +347,14 @@ void matchedPhotonTree(bool montecarlo)
 
   }
 
-  outTree->Branch("L1_SingleEG2_BptxAND",&L1_SingleEG2_BptxAND_,"L1_SingleEG2_BptxAND/I");
-  outTree->Branch("L1_SingleEG5_BptxAND",&L1_SingleEG5_BptxAND_,"L1_SingleEG5_BptxAND/I");
-  outTree->Branch("L1_SingleEG8_BptxAND",&L1_SingleEG8_BptxAND_,"L1_SingleEG8_BptxAND/I");
-  outTree->Branch("L1_SingleEG12",&L1_SingleEG12_,"L1_SingleEG12/I");
-  outTree->Branch("HLT_HISinglePhoton20_v2",&HLT_HISinglePhoton20_v2_,"HLT_HISinglePhoton20_v2/I");
-  outTree->Branch("HLT_HISinglePhoton30_v2",&HLT_HISinglePhoton30_v2_,"HLT_HISinglePhoton30_v2/I");
-  outTree->Branch("HLT_HISinglePhoton40_v2",&HLT_HISinglePhoton40_v2_,"HLT_HISinglePhoton40_v2/I");
-  outTree->Branch("HLT_HIJet55_v1",&HLT_HIJet55_v1_,"HLT_HIJet55_v1/I");
+  // outTree->Branch("L1_SingleEG2_BptxAND",&L1_SingleEG2_BptxAND_,"L1_SingleEG2_BptxAND/I");
+  // outTree->Branch("L1_SingleEG5_BptxAND",&L1_SingleEG5_BptxAND_,"L1_SingleEG5_BptxAND/I");
+  // outTree->Branch("L1_SingleEG8_BptxAND",&L1_SingleEG8_BptxAND_,"L1_SingleEG8_BptxAND/I");
+  // outTree->Branch("L1_SingleEG12",&L1_SingleEG12_,"L1_SingleEG12/I");
+  // outTree->Branch("HLT_HISinglePhoton20_v2",&HLT_HISinglePhoton20_v2_,"HLT_HISinglePhoton20_v2/I");
+  // outTree->Branch("HLT_HISinglePhoton30_v2",&HLT_HISinglePhoton30_v2_,"HLT_HISinglePhoton30_v2/I");
+  // outTree->Branch("HLT_HISinglePhoton40_v2",&HLT_HISinglePhoton40_v2_,"HLT_HISinglePhoton40_v2/I");
+  // outTree->Branch("HLT_HIJet55_v1",&HLT_HIJet55_v1_,"HLT_HIJet55_v1/I");
 
   std::map<Long64_t, Long64_t> kmap;
 
@@ -436,15 +445,22 @@ void matchedPhotonTree(bool montecarlo)
 	isoHolePunch[i] = isocal.isoHolePunch(emcand_hwEta_[i], emcand_hwPhi_[i]);
       }
 
+      for(int i = 0; i < 396; ++i)
+      {
+	region_hwPt_[i] = region_hwPt[i];
+	region_hwEta_[i] = region_hwEta[i];
+	region_hwPhi_[i] = region_hwPhi[i];
+      }
+
       fTrigTree->GetEntry(j);
-      L1_SingleEG2_BptxAND_ = L1_SingleEG2_BptxAND;
-      L1_SingleEG5_BptxAND_ = L1_SingleEG5_BptxAND;
-      L1_SingleEG8_BptxAND_ = L1_SingleEG8_BptxAND;
-      L1_SingleEG12_ = L1_SingleEG12;
-      HLT_HISinglePhoton20_v2_ = HLT_HISinglePhoton20_v2;
-      HLT_HISinglePhoton30_v2_ = HLT_HISinglePhoton30_v2;
-      HLT_HISinglePhoton40_v2_ = HLT_HISinglePhoton40_v2;
-      HLT_HIJet55_v1_ = HLT_HIJet55_v1;
+      // L1_SingleEG2_BptxAND_ = L1_SingleEG2_BptxAND;
+      // L1_SingleEG5_BptxAND_ = L1_SingleEG5_BptxAND;
+      // L1_SingleEG8_BptxAND_ = L1_SingleEG8_BptxAND;
+      // L1_SingleEG12_ = L1_SingleEG12;
+      // HLT_HISinglePhoton20_v2_ = HLT_HISinglePhoton20_v2;
+      // HLT_HISinglePhoton30_v2_ = HLT_HISinglePhoton30_v2;
+      // HLT_HISinglePhoton40_v2_ = HLT_HISinglePhoton40_v2;
+      // HLT_HIJet55_v1_ = HLT_HIJet55_v1;
 
       // f1Tree->GetEntry(j);
       // f2Tree->GetEntry(j);
