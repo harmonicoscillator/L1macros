@@ -17,14 +17,11 @@
 #include <map>
 
 #include "CalculateIsolations.cc"
+#include "EventMatchingCMS.h"
 
 const int MAXJETS = 500;
 //const Double_t L1_THRESHOLD[2] = {60, 100};
 //const Int_t THRESHOLDS = 2;
-
-Long64_t makeKey(Int_t run, Int_t event){
-  return (10000000000*(Long64_t)run + (Long64_t)event);
-}
 
 void matchedPhotonTree(bool montecarlo)
 {
@@ -42,13 +39,14 @@ void matchedPhotonTree(bool montecarlo)
   //const TString l1_input = "/export/d00/scratch/luck/minbias_HI_rctCalibrations_v4_partial.root";
   //const TString l1_input = "/export/d00/scratch/luck/photon_data_l1ntuple_v2.root";
   //const TString l1_input = "/export/d00/scratch/luck/photon_data_l1ntuple_noHCAL.root";
-  const TString l1_input = "/export/d00/scratch/luck/minbias_hydjet_l1ntuple_v2.root";
+  //const TString l1_input = "/export/d00/scratch/luck/minbias_hydjet_l1ntuple_v2.root";
+  const TString l1_input = "/export/d00/scratch/luck/minbias_noHCAL.root";
   TFile *lFile = TFile::Open(l1_input);
   TTree *l1Tree = (TTree*)lFile->Get("L1UpgradeAnalyzer/L1UpgradeTree");
   //TTree *l1Tree = (TTree*)lFile->Get("HIdigis/L1UpgradeTree");
   //TTree *l1Tree = (TTree*)lFile->Get("PPdigis/L1UpgradeTree");
 
-  Int_t l1_event, l1_run;
+  Int_t l1_event, l1_run, l1_lumi;
   Int_t l1_num;
   Int_t l1_hwPt[MAXJETS], l1_hwEta[MAXJETS], l1_hwPhi[MAXJETS], l1_hwQual[MAXJETS];
   Double_t l1_pt[MAXJETS], l1_eta[MAXJETS], l1_phi[MAXJETS];
@@ -62,6 +60,7 @@ void matchedPhotonTree(bool montecarlo)
   Int_t emcand_hwPt[144], emcand_hwPhi[144], emcand_hwEta[144], emcand_hwIso[144];
 
   l1Tree->SetBranchAddress("event",&l1_event);
+  l1Tree->SetBranchAddress("lumi",&l1_lumi);
   l1Tree->SetBranchAddress("run",&l1_run);
   l1Tree->SetBranchAddress("nJet",&l1J_num);
   l1Tree->SetBranchAddress("jet_hwPt",l1J_hwPt);
@@ -92,12 +91,12 @@ void matchedPhotonTree(bool montecarlo)
   //const TString forest_input = "/mnt/hadoop/cms/store/user/velicanu/HIMinBias2011_GR_R_53_LV6_CMSSW_5_3_16_Forest_Track8_Jet21/0.root";
   //const TString forest_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/minbiasForest_merged/0.root";
   //const TString forest_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/minbiasForest_merged_v2/HiForest_PbPb_Data_minbias_fromSkim.root";
-  //const TString forest_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/minbiasForest_merged_v2/HiForest_PbPb_Data_minbias_fromSkim_v3.root";
+  const TString forest_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/minbiasForest_merged_v2/HiForest_PbPb_Data_minbias_fromSkim_v3.root";
   //const TString forest_input = "/mnt/hadoop/cms/store/user/dgulhan/PYTHIA_HYDJET_Track9_Jet30_Pyquen_DiJet_TuneZ2_Unquenched_Hydjet1p8_2760GeV_merged/HiForest_PYTHIA_HYDJET_pthat15_Track9_Jet30_matchEqR_merged_forest_0.root";
   //const TString forest_input = "/mnt/hadoop/cms/store/user/luck/2014-photon-forests/partial_PbPb_gammaJet_MC/HiForest_QCDPhoton30.root";
   //const TString forest_input = "/mnt/hadoop/cms/store/user/ginnocen/Hydjet1p8_TuneDrum_Quenched_MinBias_2760GeV/HiMinBias_Forest_26June2014/d9ab4aca1923b3220eacf8ee0d550950/*.root";
   //const TString forest_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/HiForest_PbPb_photon2030.root";
-  const TString forest_input = "/mnt/hadoop/cms/store/user/dgulhan/HiForest_HydjetMB_730_53XBS/*.root";
+  //const TString forest_input = "/mnt/hadoop/cms/store/user/dgulhan/HiForest_HydjetMB_730_53XBS/*.root";
   // TString forest_input[10];
   // TString base = "/mnt/hadoop/cms/store/user/belt/HiForest_jet55or65or80_JetRAA_v1_final/";
   // forest_input[0] = base + "HiForest_jet55or65or80_JetRAA_v1_lumi1_*.root";
@@ -222,7 +221,7 @@ void matchedPhotonTree(bool montecarlo)
   // fTrigTree->SetBranchAddress("HLT_HIJet55_v1",&HLT_HIJet55_v1);
 
 
-  TFile *outFile = new TFile(Form("hydjet_photons_compTree.root"),"RECREATE");
+  TFile *outFile = new TFile(Form("minbias_noHCAL_photons_compTree.root"),"RECREATE");
   TTree *outTree = new TTree("l1_photon_tree","l1_photon_tree");
 
   Int_t run, lumi, evt;
@@ -356,7 +355,7 @@ void matchedPhotonTree(bool montecarlo)
   // outTree->Branch("HLT_HISinglePhoton40_v2",&HLT_HISinglePhoton40_v2_,"HLT_HISinglePhoton40_v2/I");
   // outTree->Branch("HLT_HIJet55_v1",&HLT_HIJet55_v1_,"HLT_HIJet55_v1/I");
 
-  std::map<Long64_t, Long64_t> kmap;
+  EventMatchingCMS *matcher = new EventMatchingCMS();
 
   // choose loop over l1 tree first (smaller)
   std::cout << "Begin making map." << std::endl;
@@ -364,11 +363,7 @@ void matchedPhotonTree(bool montecarlo)
   for(Long64_t j = 0; j < l_entries; ++j)
   {
     l1Tree->GetEntry(j);
-    Long64_t key = makeKey(l1_run, l1_event);
-    //std::cout << l1_run << "\t" << l1_event << "\t" << key << std::endl;
-
-    std::pair<Long64_t,Long64_t> p(key,j);
-    kmap.insert(p);
+    matcher->addEvent(l1_event, l1_lumi, l1_run, j);
   }
   std::cout << "Finished making map." << std::endl;
 
@@ -383,19 +378,15 @@ void matchedPhotonTree(bool montecarlo)
       printf("%lld / %lld\n",j,entries);
 
     fEvtTree->GetEntry(j);
-    Long64_t key = makeKey(f_run, f_evt);
-    //std::cout << f_run << "\t" << f_evt << "\t" << key << std::endl;
-
-    std::map<Long64_t,Long64_t>::const_iterator got = kmap.find(key);
-    if(got == kmap.end() ) {
+    long long l1Entry = matcher->retrieveEvent(f_evt, f_lumi, f_run);
+    if( l1Entry == -1 ) {
       continue;
     } else {
-      l1Tree->GetEntry(got->second);
-      kmap.erase(key);
+      l1Tree->GetEntry(l1Entry);
       count++;
 
       run = f_run;
-      lumi = 0; //until I fix the analyzer
+      lumi = f_lumi;
       evt = f_evt;
       hiBinOut = hiBin;
 

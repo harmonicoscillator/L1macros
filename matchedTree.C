@@ -331,7 +331,7 @@ void matchedTree(bool montecarlo)
       count++;
 
       run = f_run;
-      lumi = 0; //until I fix the analyzer
+      lumi = f_lumi;
       evt = f_evt;
       hiBinOut = hiBin;
 
