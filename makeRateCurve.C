@@ -7,7 +7,7 @@
 
 void makeRateCurve()
 {
-  const char *type = "minbias_photon_l1jets_data";
+  const char *type = "hydjet_jets_gen";
   //TFile *inFile = TFile::Open(Form("hist_out_%s_cleaned.root",type));
   const int numfile = 1;
   TFile *inFile[numfile];
@@ -19,11 +19,11 @@ void makeRateCurve()
   for(int i = 0; i < numfile; i++)
     counts[i] = (TH1D*)inFile[i]->Get("l1Pt");
 
-  const int nBins = 50;
-  const double maxPt = 100;
+  const int nBins = 75;
+  const double maxPt = 300;
 
   TH1D *rate[numfile];
-  rate[0] = new TH1D("rate",";L1 p_{T};Rate (w.r.t. minbias 2011)",nBins,0,maxPt);
+  rate[0] = new TH1D("rate",";L1 p_{T};Rate (w.r.t. 5.02TeV Hydjet)",nBins,0,maxPt);
   //rate[1] = (TH1D*)rate[0]->Clone("1");
   // rate[2] = (TH1D*)rate[0]->Clone("2");
 

@@ -41,8 +41,8 @@ void matchedPhotonTree(bool montecarlo)
   // const TString l1_input = "/export/d00/scratch/luck/minbias_HI_v2.root";
   //const TString l1_input = "/export/d00/scratch/luck/minbias_HI_rctCalibrations_v4_partial.root";
   //const TString l1_input = "/export/d00/scratch/luck/photon_data_l1ntuple_v2.root";
-  const TString l1_input = "/export/d00/scratch/luck/photon_data_l1ntuple_noHCAL.root";
-  //const TString l1_input = "/export/d00/scratch/luck/minbias_hydjet_l1ntuple.root";
+  //const TString l1_input = "/export/d00/scratch/luck/photon_data_l1ntuple_noHCAL.root";
+  const TString l1_input = "/export/d00/scratch/luck/minbias_hydjet_l1ntuple_v2.root";
   TFile *lFile = TFile::Open(l1_input);
   TTree *l1Tree = (TTree*)lFile->Get("L1UpgradeAnalyzer/L1UpgradeTree");
   //TTree *l1Tree = (TTree*)lFile->Get("HIdigis/L1UpgradeTree");
@@ -96,8 +96,8 @@ void matchedPhotonTree(bool montecarlo)
   //const TString forest_input = "/mnt/hadoop/cms/store/user/dgulhan/PYTHIA_HYDJET_Track9_Jet30_Pyquen_DiJet_TuneZ2_Unquenched_Hydjet1p8_2760GeV_merged/HiForest_PYTHIA_HYDJET_pthat15_Track9_Jet30_matchEqR_merged_forest_0.root";
   //const TString forest_input = "/mnt/hadoop/cms/store/user/luck/2014-photon-forests/partial_PbPb_gammaJet_MC/HiForest_QCDPhoton30.root";
   //const TString forest_input = "/mnt/hadoop/cms/store/user/ginnocen/Hydjet1p8_TuneDrum_Quenched_MinBias_2760GeV/HiMinBias_Forest_26June2014/d9ab4aca1923b3220eacf8ee0d550950/*.root";
-  const TString forest_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/HiForest_PbPb_photon2030.root";
-  //const TString forest_input = "/mnt/hadoop/cms/store/user/dgulhan/HiForest_HydjetMB_730_53XBS/*.root";
+  //const TString forest_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/HiForest_PbPb_photon2030.root";
+  const TString forest_input = "/mnt/hadoop/cms/store/user/dgulhan/HiForest_HydjetMB_730_53XBS/*.root";
   // TString forest_input[10];
   // TString base = "/mnt/hadoop/cms/store/user/belt/HiForest_jet55or65or80_JetRAA_v1_final/";
   // forest_input[0] = base + "HiForest_jet55or65or80_JetRAA_v1_lumi1_*.root";
@@ -222,7 +222,7 @@ void matchedPhotonTree(bool montecarlo)
   // fTrigTree->SetBranchAddress("HLT_HIJet55_v1",&HLT_HIJet55_v1);
 
 
-  TFile *outFile = new TFile(Form("photon_data_noHCAL_compTree.root"),"RECREATE");
+  TFile *outFile = new TFile(Form("hydjet_photons_compTree.root"),"RECREATE");
   TTree *outTree = new TTree("l1_photon_tree","l1_photon_tree");
 
   Int_t run, lumi, evt;

@@ -16,6 +16,8 @@
 #include <iostream>
 #include <map>
 
+#include "EventMatchingCMS.h"
+
 const int MAXJETS = 500;
 //const Double_t L1_THRESHOLD[2] = {60, 100};
 //const Int_t THRESHOLDS = 2;
@@ -37,39 +39,40 @@ void matchedTree(bool montecarlo)
   //const TString l1_input = "/export/d00/scratch/luck/jet55_data_l1ntuple_20141022.root";
   //const TString l1_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/jet55_data_l1ntuple_20141022.root";
   //const TString l1_input = "/export/d00/scratch/luck/photon_data_l1ntuple.root";
-  const TString l1_input = "/export/d00/scratch/luck/minbias_hydjet_l1ntuple.root";
+  const TString l1_input = "/export/d00/scratch/luck/minbias_hydjet_l1ntuple_v2.root";
 
   TFile *lFile = TFile::Open(l1_input);
   TTree *l1Tree = (TTree*)lFile->Get("L1UpgradeAnalyzer/L1UpgradeTree");
   //TTree *l1Tree = (TTree*)lFile->Get("HIdigis/L1UpgradeTree");
   //TTree *l1Tree = (TTree*)lFile->Get("PPdigis/L1UpgradeTree");
 
-  Int_t l1_event, l1_run;
+  Int_t l1_event, l1_run, l1_lumi;
   Int_t l1_num;
   Int_t l1_hwPt[MAXJETS], l1_hwEta[MAXJETS], l1_hwPhi[MAXJETS], l1_hwQual[MAXJETS];
   Double_t l1_pt[MAXJETS], l1_eta[MAXJETS], l1_phi[MAXJETS];
 
-  Int_t l1_hwIso[MAXJETS];
+  //Int_t l1_hwIso[MAXJETS];
 
   l1Tree->SetBranchAddress("event",&l1_event);
   l1Tree->SetBranchAddress("run",&l1_run);
-  // l1Tree->SetBranchAddress("nJet",&l1_num);
-  // l1Tree->SetBranchAddress("jet_hwPt",l1_hwPt);
-  // l1Tree->SetBranchAddress("jet_hwEta",l1_hwEta);
-  // l1Tree->SetBranchAddress("jet_hwPhi",l1_hwPhi);
-  // l1Tree->SetBranchAddress("jet_hwQual",l1_hwQual);
-  // l1Tree->SetBranchAddress("jet_pt",l1_pt);
-  // l1Tree->SetBranchAddress("jet_eta",l1_eta);
-  // l1Tree->SetBranchAddress("jet_phi",l1_phi);
-  l1Tree->SetBranchAddress("nEgamma",&l1_num);
-  l1Tree->SetBranchAddress("egamma_hwPt",l1_hwPt);
-  l1Tree->SetBranchAddress("egamma_hwEta",l1_hwEta);
-  l1Tree->SetBranchAddress("egamma_hwPhi",l1_hwPhi);
-  l1Tree->SetBranchAddress("egamma_hwQual",l1_hwQual);
-  l1Tree->SetBranchAddress("egamma_pt",l1_pt);
-  l1Tree->SetBranchAddress("egamma_eta",l1_eta);
-  l1Tree->SetBranchAddress("egamma_phi",l1_phi);
-  l1Tree->SetBranchAddress("egamma_hwIso",l1_hwIso);
+  l1Tree->SetBranchAddress("lumi",&l1_lumi);
+  l1Tree->SetBranchAddress("nJet",&l1_num);
+  l1Tree->SetBranchAddress("jet_hwPt",l1_hwPt);
+  l1Tree->SetBranchAddress("jet_hwEta",l1_hwEta);
+  l1Tree->SetBranchAddress("jet_hwPhi",l1_hwPhi);
+  l1Tree->SetBranchAddress("jet_hwQual",l1_hwQual);
+  l1Tree->SetBranchAddress("jet_pt",l1_pt);
+  l1Tree->SetBranchAddress("jet_eta",l1_eta);
+  l1Tree->SetBranchAddress("jet_phi",l1_phi);
+  // l1Tree->SetBranchAddress("nEgamma",&l1_num);
+  // l1Tree->SetBranchAddress("egamma_hwPt",l1_hwPt);
+  // l1Tree->SetBranchAddress("egamma_hwEta",l1_hwEta);
+  // l1Tree->SetBranchAddress("egamma_hwPhi",l1_hwPhi);
+  // l1Tree->SetBranchAddress("egamma_hwQual",l1_hwQual);
+  // l1Tree->SetBranchAddress("egamma_pt",l1_pt);
+  // l1Tree->SetBranchAddress("egamma_eta",l1_eta);
+  // l1Tree->SetBranchAddress("egamma_phi",l1_phi);
+  // l1Tree->SetBranchAddress("egamma_hwIso",l1_hwIso);
 
   //const TString forest_input = "/mnt/hadoop/cms/store/user/velicanu/HIMinBias2011_GR_R_53_LV6_CMSSW_5_3_16_Forest_Track8_Jet21/0.root";
   //const TString forest_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/minbiasForest_merged/0.root";
@@ -142,7 +145,7 @@ void matchedTree(bool montecarlo)
   // Float_t genIso[MAXJETS];
   // Int_t genId[MAXJETS], genMomId[MAXJETS];
 
-  
+
   f1Tree->SetBranchAddress("nref",&f_num);
   f1Tree->SetBranchAddress("jtpt",f_pt);
   f1Tree->SetBranchAddress("jteta",f_eta);
@@ -191,7 +194,7 @@ void matchedTree(bool montecarlo)
 
   Int_t run, lumi, evt;
 
-  Int_t nl1Jet, nPuJet, nGenJet;//nVsJet, 
+  Int_t nl1Jet, nPuJet, nGenJet;//nVsJet,
   Int_t l1Jet_hwPt[MAXJETS], l1Jet_hwEta[MAXJETS], l1Jet_hwPhi[MAXJETS], l1Jet_hwQual[MAXJETS];
   Float_t l1Jet_pt[MAXJETS], l1Jet_eta[MAXJETS], l1Jet_phi[MAXJETS];
   Float_t PuJet_pt[MAXJETS], PuJet_eta[MAXJETS], PuJet_phi[MAXJETS], PuJet_rawpt[MAXJETS];
@@ -265,7 +268,7 @@ void matchedTree(bool montecarlo)
   // outTree->Branch("photon_pt",photon_pt,"photon_pt[nPhoton]/F");
   // outTree->Branch("photon_eta",photon_eta,"photon_eta[nPhoton]/F");
   // outTree->Branch("photon_phi",photon_phi,"photon_phi[nPhoton]/F");
- 
+
   // outTree->Branch("cc4",photon_cc4,"cc4[nPhoton]/F");
   // outTree->Branch("cr4",photon_cr4,"cr4[nPhoton]/F");
   // outTree->Branch("ct4PtCut20",photon_ct4PtCut20,"ct4PtCut20[nPhoton]/F");
@@ -279,7 +282,7 @@ void matchedTree(bool montecarlo)
   // outTree->Branch("swissCrx",photon_swissCrx,"swissCrx[nPhoton]/F");
   // outTree->Branch("seedTime",photon_seedTime,"seedTime[nPhoton]/F");
 
-  
+
   if(montecarlo)
   {
     outTree->Branch("nGenJet",&nGenJet,"nGenJet/I");
@@ -294,10 +297,10 @@ void matchedTree(bool montecarlo)
     // outTree->Branch("gen_iso",gen_iso,"gen_iso[nGen]/F");
     // outTree->Branch("gen_id",gen_id,"gen_id[nGen]/I");
     // outTree->Branch("gen_momId",gen_momId,"gen_momId[nGen]/I");
-   
+
   }
 
-  std::map<Long64_t, Long64_t> kmap;
+  EventMatchingCMS *matcher = new EventMatchingCMS();
 
   // choose loop over l1 tree first (smaller)
   std::cout << "Begin making map." << std::endl;
@@ -305,11 +308,7 @@ void matchedTree(bool montecarlo)
   for(Long64_t j = 0; j < l_entries; ++j)
   {
     l1Tree->GetEntry(j);
-    Long64_t key = makeKey(l1_run, l1_event);
-    //std::cout << l1_run << "\t" << l1_event << "\t" << key << std::endl;
-
-    std::pair<Long64_t,Long64_t> p(key,j);
-    kmap.insert(p);
+    matcher->addEvent(l1_event, l1_lumi, l1_run, j);
   }
   std::cout << "Finished making map." << std::endl;
 
@@ -324,15 +323,11 @@ void matchedTree(bool montecarlo)
       printf("%lld / %lld\n",j,entries);
 
     fEvtTree->GetEntry(j);
-    Long64_t key = makeKey(f_run, f_evt);
-    //std::cout << f_run << "\t" << f_evt << "\t" << key << std::endl;
-
-    std::map<Long64_t,Long64_t>::const_iterator got = kmap.find(key);
-    if(got == kmap.end() ) {
+    long long l1Entry = matcher->retrieveEvent(f_evt, f_lumi, f_run);
+    if( l1Entry == -1 ) {
       continue;
     } else {
-      l1Tree->GetEntry(got->second);
-      kmap.erase(key);
+      l1Tree->GetEntry(l1Entry);
       count++;
 
       run = f_run;
