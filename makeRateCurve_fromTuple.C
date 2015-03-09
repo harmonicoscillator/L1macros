@@ -17,13 +17,17 @@ void makeRateCurve_fromTuple()
   //const char *type = "hydjet_jets_gen";
   //TFile *inFile = TFile::Open("/export/d00/scratch/luck/minbias_hydjet_l1ntuple_v2.root");
   //TFile *inFile = TFile::Open("/export/d00/scratch/luck/hydjet_l1ntuple_20141022_v2.root");
-  TFile *inFile = TFile::Open("/export/d00/scratch/luck/HydjetMB_740pre8_MCHI2_74_V3_53XBS_L1UpgradeAnalyzer_GT_MCHI2_74_V3_movedForwardDef.root");
-  TTree *inTree = (TTree*)inFile->Get("L1UpgradeAnalyzer/L1UpgradeTree");
+  //TFile *inFile = TFile::Open("/export/d00/scratch/luck/HydjetMB_740pre8_MCHI2_74_V3_53XBS_L1UpgradeAnalyzer_GT_MCHI2_74_V3_movedForwardDef.root");
+  //TTree *inTree = (TTree*)inFile->Get("L1UpgradeAnalyzer/L1UpgradeTree");
 
-  Int_t l1_num;
-  inTree->SetBranchAddress("nJet",&l1_num);
 
-  Double_t l1_pt[MAXJETS];
+  TFile *inFile = TFile::Open("Hydjet276_regionsub.root");
+  TTree *inTree = (TTree*)inFile->Get("phi_ring_subtracted_tree");
+
+  // Int_t l1_num;
+  // inTree->SetBranchAddress("nJet",&l1_num);
+
+  Int_t l1_pt[MAXJETS];
   inTree->SetBranchAddress("jet_pt",l1_pt);
 
   TH1D *counts = new TH1D("counts","counts",nBins,0,maxPt);
@@ -34,7 +38,7 @@ void makeRateCurve_fromTuple()
     inTree->GetEntry(i);
 
     double maxl1pt = 0;
-    for(int j = 0; j < 4; ++j)
+    for(int j = 0; j < 8; ++j)
     {
       if(l1_pt[j] > maxl1pt)
 	maxl1pt = l1_pt[j];
@@ -75,5 +79,5 @@ void makeRateCurve_fromTuple()
   // leg->AddEntry(rate[2],"forward", "l");
   //leg->Draw();
 
-  c1->SaveAs("hydjet_502_jets_rate.pdf");
+  //c1->SaveAs("hydjet_502_jets_rate.pdf");
 }

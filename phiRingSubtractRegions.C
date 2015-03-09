@@ -24,6 +24,7 @@ int deltaGctPhi(int phi1, int phi2)
 void phiRingSubtractRegions()
 {
   const TString l1_input = "/export/d00/scratch/luck/HydjetMB_740pre8_MCHI2_74_V3_53XBS_L1UpgradeAnalyzer_GT_MCHI2_74_V3.root";
+  //const TString l1_input = "/export/d00/scratch/luck/Hydjet1p8_2760GeV_L1UpgradeAnalyzer_GT_run1_mc_HIon_L1UpgradeAnalyzer.root";
   TFile *lFile = TFile::Open(l1_input);
   TTree *l1Tree = (TTree*)lFile->Get("L1UpgradeAnalyzer/L1UpgradeTree");
 
@@ -39,14 +40,14 @@ void phiRingSubtractRegions()
   l1Tree->SetBranchAddress("region_hwEta", region_hwEta);
   l1Tree->SetBranchAddress("region_hwPhi", region_hwPhi);
 
-  TFile *outFile = new TFile(Form("Hydjet502_regionsub.root"),"RECREATE");
+  TFile *outFile = new TFile(Form("Hydjet502_regionsub_moveForwardDef.root"),"RECREATE");
   TTree *outTree = new TTree("phi_ring_subtracted_tree","phi_ring_subtracted_tree");
 
   Int_t run, lumi, evt;
 
   Int_t region_hwPt_[396], region_hwPhi_[396], region_hwEta_[396];
   Int_t subregion_hwPt[396], subregion_hwPhi[396], subregion_hwEta[396];
-  Int_t jet_hwPt[8], jet_hwEta[8], jet_hwPhi[8];
+  Int_t jet_hwPt[8], jet_hwEta[8], jet_hwPhi[8], jet_pt[8];
 
   int puLevelHI[22];
   float r_puLevelHI[22];
@@ -63,6 +64,7 @@ void phiRingSubtractRegions()
   outTree->Branch("subregion_hwEta",subregion_hwEta,"subregion_hwEta[396]/I");
 
   outTree->Branch("jet_hwPt",jet_hwPt,"jet_hwPt[8]/I");
+  outTree->Branch("jet_pt",jet_pt,"jet_pt[8]/I");
   outTree->Branch("jet_hwPhi",jet_hwPhi,"jet_hwPhi[8]/I");
   outTree->Branch("jet_hwEta",jet_hwEta,"jet_hwEta[8]/I");
 
@@ -122,6 +124,7 @@ void phiRingSubtractRegions()
     for(int i = 0; i < 8; i++)
     {
       jet_hwPt[i] = outJets[i].pt;
+      jet_pt[i] = outJets[i].pt * 4;
       jet_hwEta[i] = outJets[i].eta;
       jet_hwPhi[i] = outJets[i].phi;
     }
@@ -236,8 +239,8 @@ void SlidingWindowJetFinder(cand region[396], cand output[8])
       theJet.phi = jetPhi;
 
       //first iteration, eta cut defines forward
-      //const bool forward = (jetEta <= 4 || jetEta >= 17);
-      const bool forward = (jetEta < 4 || jetEta > 17);
+      const bool forward = (jetEta <= 4 || jetEta >= 17);
+      //const bool forward = (jetEta < 4 || jetEta > 17);
 
       if(forward)
 	forjets.push_back(theJet);
