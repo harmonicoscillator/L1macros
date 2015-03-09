@@ -15,7 +15,9 @@ void makeRateCurve_fromTuple()
   const double maxPt = 300;
 
   //const char *type = "hydjet_jets_gen";
-  TFile *inFile = TFile::Open("/export/d00/scratch/luck/minbias_hydjet_l1ntuple_v2.root");
+  //TFile *inFile = TFile::Open("/export/d00/scratch/luck/minbias_hydjet_l1ntuple_v2.root");
+  //TFile *inFile = TFile::Open("/export/d00/scratch/luck/hydjet_l1ntuple_20141022_v2.root");
+  TFile *inFile = TFile::Open("/export/d00/scratch/luck/HydjetMB_740pre8_MCHI2_74_V3_53XBS_L1UpgradeAnalyzer_GT_MCHI2_74_V3_movedForwardDef.root");
   TTree *inTree = (TTree*)inFile->Get("L1UpgradeAnalyzer/L1UpgradeTree");
 
   Int_t l1_num;
@@ -31,8 +33,8 @@ void makeRateCurve_fromTuple()
   {
     inTree->GetEntry(i);
 
-    double maxl1pt = -1;
-    for(int j = 0; j < l1_num; ++j)
+    double maxl1pt = 0;
+    for(int j = 0; j < 4; ++j)
     {
       if(l1_pt[j] > maxl1pt)
 	maxl1pt = l1_pt[j];
@@ -60,7 +62,7 @@ void makeRateCurve_fromTuple()
   }
 
   TCanvas *c1 = new TCanvas();
-  rate->Draw("l");
+  rate->Draw("hist");
   c1->SetLogy();
 
   TLegend *leg = new TLegend(0.5, 0.5, 0.8, 0.8);
@@ -73,5 +75,5 @@ void makeRateCurve_fromTuple()
   // leg->AddEntry(rate[2],"forward", "l");
   //leg->Draw();
 
-  c1->SaveAs("hydjet_jets_rate.pdf");
+  c1->SaveAs("hydjet_502_jets_rate.pdf");
 }

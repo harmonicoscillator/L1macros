@@ -55,7 +55,7 @@ double getPhysicalPhi(int phiIndex)
 
 void makeTurnPhotonOn_fromTree()
 {
-  TFile *inFile = TFile::Open("photon_data_noHCAL_compTree.root");
+  TFile *inFile = TFile::Open("hydjet_photons_compTree.root");
   //TFile *inFile = TFile::Open("/export/d00/scratch/luck/jet55_data_compTree_combined.root");
   TTree *inTree = (TTree*)inFile->Get("l1_photon_tree");
 
@@ -162,24 +162,24 @@ void makeTurnPhotonOn_fromTree()
   inTree->SetBranchAddress("L1_SingleEG12", &L1_SingleEG12);
 
 
-  // Int_t nGen;
-  // Float_t gen_pt[MAXJETS], gen_eta[MAXJETS];//, gen_phi[MAXJETS];
-  // Float_t gen_iso[MAXJETS];
-  // Int_t gen_id[MAXJETS], gen_momId[MAXJETS];
+  Int_t nGen;
+  Float_t gen_pt[MAXJETS], gen_eta[MAXJETS];//, gen_phi[MAXJETS];
+  Float_t gen_iso[MAXJETS];
+  Int_t gen_id[MAXJETS], gen_momId[MAXJETS];
 
-  // inTree->SetBranchAddress("nGen",&nGen);
-  // inTree->SetBranchAddress("gen_pt",gen_pt);
-  // inTree->SetBranchAddress("gen_eta",gen_eta);
-  // //inTree->SetBranchAddress("gen_phi",gen_phi);
-  // inTree->SetBranchAddress("gen_iso",gen_iso);
-  // inTree->SetBranchAddress("gen_id",gen_id);
-  // inTree->SetBranchAddress("gen_momId",gen_momId);
+  inTree->SetBranchAddress("nGen",&nGen);
+  inTree->SetBranchAddress("gen_pt",gen_pt);
+  inTree->SetBranchAddress("gen_eta",gen_eta);
+  //inTree->SetBranchAddress("gen_phi",gen_phi);
+  inTree->SetBranchAddress("gen_iso",gen_iso);
+  inTree->SetBranchAddress("gen_id",gen_id);
+  inTree->SetBranchAddress("gen_momId",gen_momId);
 
 
-  TFile *outFile = new TFile(Form("hist_photon_data_noHCAL.root"),"RECREATE");
+  TFile *outFile = new TFile(Form("hist_hydjet_photons_reco.root"),"RECREATE");
   outFile->cd();
 
-  const int nBins = 50;
+  const int nBins = 100;
   const double maxPt = 100;
 
   TH1D *l1Pt = new TH1D("l1Pt",";L1 p_{T} (GeV)",nBins,0,maxPt);
@@ -235,10 +235,9 @@ void makeTurnPhotonOn_fromTree()
     // }
 
     // match to Layer 2 EGammas
-    // double maxisopt = l1Egamma_pt[0];
-    // double maxnonisopt = l1Egamma_pt[4];
-    // maxl1pt = std::max(maxisopt, maxnonisopt);
-    //double maxl1pt = maxisopt;
+    double maxisopt = l1Egamma_pt[0];
+    double maxnonisopt = l1Egamma_pt[4];
+    maxl1pt = std::max(maxisopt, maxnonisopt);
 
     //match to Layer 2 jets
     // for(int i = 0; i < nl1Jet; ++i)
@@ -252,26 +251,24 @@ void makeTurnPhotonOn_fromTree()
     //   }
     // }
 
-    //match to regions
-    for(int i = 0; i < 396; ++i)
-    {
-      if(region_hwPt[i] > maxl1pt)
-      {
-	maxl1pt = region_hwPt[i];
- 	maxl1eta = getPhysicalEta(region_hwEta[i]);
-     	maxl1phi = getPhysicalPhi(region_hwPhi[i]);
-      }
-    }
+    // //match to regions
+    // for(int i = 0; i < 396; ++i)
+    // {
+    //   if(region_hwPt[i] > maxl1pt)
+    //   {
+    // 	maxl1pt = region_hwPt[i];
+    // 	maxl1eta = getPhysicalEta(region_hwEta[i]);
+    //  	maxl1phi = getPhysicalPhi(region_hwPhi[i]);
+    //   }
+    // }
 
     double maxfpt = -1;
     double maxfeta = -999;
     double maxfphi = -999;
+
+    //match to RECO
     for(int i = 0; i < nPhoton; ++i)
     {
-      // if(TMath::Abs(gen_momId[i]) <= 22)
-      // if(gen_id[i] == 22)
-      // if(gen_iso[i] < 5)
-      // if(gen_pt[i] > maxfpt)
       if(photon_pt[i] > maxfpt)
       if((cc4[i] + cr4[i] + ct4PtCut20[i]) < 1)
       if(TMath::Abs(photon_eta[i]) < 1.4791)
@@ -282,11 +279,25 @@ void makeTurnPhotonOn_fromTree()
       if(sigmaIphiIphi[i] > 0.002)
       if(hadronicOverEm[i] < 0.1)
       {
-	maxfpt = photon_pt[i];
-	maxfeta = photon_eta[i];
-	maxfphi = photon_phi[i];
+    	maxfpt = photon_pt[i];
+    	maxfeta = photon_eta[i];
+    	maxfphi = photon_phi[i];
       }
     }
+
+    // //match to GEN
+    // for(int i = 0; i < nGen; ++i)
+    // {
+    //   if(TMath::Abs(gen_momId[i]) <= 22)
+    //   if(gen_id[i] == 22)
+    //   if(gen_iso[i] < 5)
+    //   if(TMath::Abs(gen_eta[i]) < 1.479 )
+    //   if(gen_pt[i] > maxfpt) {
+    // 	maxfpt = gen_pt[i];
+    // 	maxfeta = gen_eta[i];
+    //   }
+    // }
+
     //if(f_num > MAXJETS) std::cout << "TOO SMALL" << std::endl;
     l1Pt->Fill(maxl1pt);
 
@@ -363,7 +374,7 @@ void makeTurnPhotonOn_fromTree()
     }
   }
 
-  TGraphAsymmErrors *a[4][3];
+  TGraphAsymmErrors *a[THRESHOLDS][3];
   for(int k = 0; k < THRESHOLDS; ++k){
     for(int l = 0; l < 3; ++l)
     {

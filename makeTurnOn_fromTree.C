@@ -17,13 +17,14 @@
 #include <map>
 
 const int MAXJETS = 500;
-const Int_t THRESHOLDS = 12;
-const Double_t L1_THRESHOLD[THRESHOLDS] = {12,16,20,24,28,36,40,44,52,60,80,100};
+const Int_t THRESHOLDS = 11;
+const Double_t L1_THRESHOLD[THRESHOLDS] = {16,20,32,36,40,44,52,68,80,92,128};
 
 void makeTurnOn_fromTree()
 {
-  TFile *inFile = TFile::Open("hydjet_jets_compTree.root");
+  //TFile *inFile = TFile::Open("hydjet_jets_compTree.root");
   //TFile *inFile = TFile::Open("/export/d00/scratch/luck/jet55_data_compTree_combined.root");
+  TFile *inFile = TFile::Open("hydjet_276_jets_compTree.root");
   TTree *inTree = (TTree*)inFile->Get("l1_photon_tree");
 
   Int_t run, lumi, evt;
@@ -78,7 +79,7 @@ void makeTurnOn_fromTree()
   inTree->SetBranchAddress("L1_SingleEG12", &L1_SingleEG12);
 
 
-  TFile *outFile = new TFile(Form("hist_hydjet_jets_gen.root"),"RECREATE");
+  TFile *outFile = new TFile(Form("hist_hydjet_276_jets_gen.root"),"RECREATE");
   outFile->cd();
 
   const int nBins = 75;
@@ -107,26 +108,26 @@ void makeTurnOn_fromTree()
 
     inTree->GetEntry(j);
 
-    double maxl1pt = -1;
+    double maxl1pt = 0;
     for(int i = 0; i < nl1Jet; ++i)
     {
       if(l1Jet_pt[i] > maxl1pt)
 	maxl1pt = l1Jet_pt[i];
     }
 
-    double maxfpt = -1;
+    double maxfpt = 0;
     // for(int i = 0; i < nPuJet; ++i)
     // {
-    //   //if(TMath::Abs(PuJet_eta[i]) > 2)
-    //   {
+    //   //if(TMath::Abs(PuJet_eta[i]) > 2) continue;
+    //   if(PuJet_pt[i] > maxfpt) {
     // 	maxfpt = PuJet_pt[i];
-    // 	break;
     //   }
     // }
     for(int i = 0; i < nGenJet; ++i)
     {
+      //if(TMath::Abs(genJet_eta[i]) > 2.0) continue;
       if(genJet_pt[i] > maxfpt)
-	maxfpt = genJet_pt[i];
+    	maxfpt = genJet_pt[i];
     }
     //if(f_num > MAXJETS) std::cout << "TOO SMALL" << std::endl;
     l1Pt->Fill(maxl1pt);

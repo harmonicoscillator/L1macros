@@ -35,11 +35,11 @@ void matchedTree(bool montecarlo)
   //const TString l1_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/minbias_l1ntuple_HIPUM0.root";
   //const TString l1_input = "/export/d00/scratch/luck/dijet15_l1ntuple_20141022_v2.root";
   //const TString l1_input = "/export/d00/scratch/luck/photon30_l1ntuple_20141022_v2.root";
-  //const TString l1_input = "/export/d00/scratch/luck/hydjet_l1ntuple_20141022_v2.root";
+  const TString l1_input = "/export/d00/scratch/luck/hydjet_l1ntuple_20141022_v2.root";
   //const TString l1_input = "/export/d00/scratch/luck/jet55_data_l1ntuple_20141022.root";
   //const TString l1_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/jet55_data_l1ntuple_20141022.root";
   //const TString l1_input = "/export/d00/scratch/luck/photon_data_l1ntuple.root";
-  const TString l1_input = "/export/d00/scratch/luck/minbias_hydjet_l1ntuple_v2.root";
+  //const TString l1_input = "/export/d00/scratch/luck/minbias_hydjet_l1ntuple_v3.root";
 
   TFile *lFile = TFile::Open(l1_input);
   TTree *l1Tree = (TTree*)lFile->Get("L1UpgradeAnalyzer/L1UpgradeTree");
@@ -79,9 +79,9 @@ void matchedTree(bool montecarlo)
   //const TString forest_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/minbiasForest_merged_v2/HiForest_PbPb_Data_minbias_fromSkim.root";
   //const TString forest_input = "/mnt/hadoop/cms/store/user/dgulhan/PYTHIA_HYDJET_Track9_Jet30_Pyquen_DiJet_TuneZ2_Unquenched_Hydjet1p8_2760GeV_merged/HiForest_PYTHIA_HYDJET_pthat15_Track9_Jet30_matchEqR_merged_forest_0.root";
   //const TString forest_input = "/mnt/hadoop/cms/store/user/luck/2014-photon-forests/partial_PbPb_gammaJet_MC/HiForest_QCDPhoton30.root";
-  //const TString forest_input = "/mnt/hadoop/cms/store/user/ginnocen/Hydjet1p8_TuneDrum_Quenched_MinBias_2760GeV/HiMinBias_Forest_26June2014/d9ab4aca1923b3220eacf8ee0d550950/*.root";
+  const TString forest_input = "/mnt/hadoop/cms/store/user/ginnocen/Hydjet1p8_TuneDrum_Quenched_MinBias_2760GeV/HiMinBias_Forest_26June2014/d9ab4aca1923b3220eacf8ee0d550950/*.root";
   //const TString forest_input = "/mnt/hadoop/cms/store/user/luck/L1Emulator/PhotonTrigForests_v1/0.root";
-  const TString forest_input = "/mnt/hadoop/cms/store/user/dgulhan/HiForest_HydjetMB_730_53XBS/*.root";
+  //const TString forest_input = "/mnt/hadoop/cms/store/user/dgulhan/HiForest_HydjetMB_730_53XBS/*.root";
   // TString forest_input[10];
   // TString base = "/mnt/hadoop/cms/store/user/belt/HiForest_jet55or65or80_JetRAA_v1_final/";
   // forest_input[0] = base + "HiForest_jet55or65or80_JetRAA_v1_lumi1_*.root";
@@ -189,7 +189,7 @@ void matchedTree(bool montecarlo)
     // fTree->SetBranchAddress("gpMomId",genMomId);
   }
 
-  TFile *outFile = new TFile(Form("hydjet_jets_compTree.root"),"RECREATE");
+  TFile *outFile = new TFile(Form("hydjet_276_jets_compTree.root"),"RECREATE");
   TTree *outTree = new TTree("l1_photon_tree","l1_photon_tree");
 
   Int_t run, lumi, evt;
@@ -308,7 +308,8 @@ void matchedTree(bool montecarlo)
   for(Long64_t j = 0; j < l_entries; ++j)
   {
     l1Tree->GetEntry(j);
-    matcher->addEvent(l1_event, l1_lumi, l1_run, j);
+    //matcher->addEvent(l1_event, l1_lumi, l1_run, j);
+    matcher->addEvent(l1_event, 0, l1_run, j);
   }
   std::cout << "Finished making map." << std::endl;
 
@@ -323,121 +324,119 @@ void matchedTree(bool montecarlo)
       printf("%lld / %lld\n",j,entries);
 
     fEvtTree->GetEntry(j);
-    long long l1Entry = matcher->retrieveEvent(f_evt, f_lumi, f_run);
-    if( l1Entry == -1 ) {
-      continue;
-    } else {
-      l1Tree->GetEntry(l1Entry);
-      count++;
+    //long long l1Entry = matcher->retrieveEvent(f_evt, f_lumi, f_run);
+    long long l1Entry = matcher->retrieveEvent(f_evt, 0, f_run);
+    if( l1Entry == -1 )  continue;
+    l1Tree->GetEntry(l1Entry);
+    count++;
 
-      run = f_run;
-      lumi = f_lumi;
-      evt = f_evt;
-      hiBinOut = hiBin;
+    run = f_run;
+    lumi = f_lumi;
+    evt = f_evt;
+    hiBinOut = hiBin;
 
-      // nl1Egamma = l1_num;
-      // for(int i = 0; i < l1_num; i++)
-      // {
-      // 	l1Egamma_hwPt[i] = l1_hwPt[i];
-      // 	l1Egamma_hwEta[i] = l1_hwEta[i];
-      // 	l1Egamma_hwPhi[i] = l1_hwPhi[i];
-      // 	l1Egamma_hwQual[i] = l1_hwQual[i];
+    // nl1Egamma = l1_num;
+    // for(int i = 0; i < l1_num; i++)
+    // {
+    // 	l1Egamma_hwPt[i] = l1_hwPt[i];
+    // 	l1Egamma_hwEta[i] = l1_hwEta[i];
+    // 	l1Egamma_hwPhi[i] = l1_hwPhi[i];
+    // 	l1Egamma_hwQual[i] = l1_hwQual[i];
 
-      // 	l1Egamma_pt[i] = l1_pt[i];
-      // 	l1Egamma_eta[i] = l1_eta[i];
-      // 	l1Egamma_phi[i] = l1_phi[i];
+    // 	l1Egamma_pt[i] = l1_pt[i];
+    // 	l1Egamma_eta[i] = l1_eta[i];
+    // 	l1Egamma_phi[i] = l1_phi[i];
 
-      // 	l1Egamma_hwIso[i] = l1_hwIso[i];
-      // }
+    // 	l1Egamma_hwIso[i] = l1_hwIso[i];
+    // }
 
-      nl1Jet = l1_num;
-      for(int i = 0; i < l1_num; i++)
-      {
-      	l1Jet_hwPt[i] = l1_hwPt[i];
-      	l1Jet_hwEta[i] = l1_hwEta[i];
-      	l1Jet_hwPhi[i] = l1_hwPhi[i];
-      	l1Jet_hwQual[i] = l1_hwQual[i];
+    nl1Jet = l1_num;
+    for(int i = 0; i < l1_num; i++)
+    {
+      l1Jet_hwPt[i] = l1_hwPt[i];
+      l1Jet_hwEta[i] = l1_hwEta[i];
+      l1Jet_hwPhi[i] = l1_hwPhi[i];
+      l1Jet_hwQual[i] = l1_hwQual[i];
 
-      	l1Jet_pt[i] = l1_pt[i];
-      	l1Jet_eta[i] = l1_eta[i];
-      	l1Jet_phi[i] = l1_phi[i];
+      l1Jet_pt[i] = l1_pt[i];
+      l1Jet_eta[i] = l1_eta[i];
+      l1Jet_phi[i] = l1_phi[i];
 
-      	//l1Jet_hwIso[i] = l1_hwIso[i];
-      }
-
-      f1Tree->GetEntry(j);
-      // f2Tree->GetEntry(j);
-      //fTree->GetEntry(j);
-
-      nPuJet = f_num;
-      for(int i = 0; i < f_num; i++)
-      {
-      	PuJet_pt[i] = f_pt[i];
-      	PuJet_rawpt[i] = f_rawpt[i];
-      	PuJet_eta[i] = f_eta[i];
-      	PuJet_phi[i] = f_phi[i];
-      }
-
-      // nVsJet = f2_num;
-      // for(int i = 0; i < f2_num; i++)
-      // {
-      // 	VsJet_pt[i] = f2_pt[i];
-      // 	VsJet_rawpt[i] = f2_rawpt[i];
-      // 	VsJet_eta[i] = f2_eta[i];
-      // 	VsJet_phi[i] = f2_phi[i];
-      // }
-      // nPhoton = f_num;
-      // for(int i = 0; i < f_num; i++)
-      // {
-      // 	photon_pt[i] = f_pt[i];
-      // 	photon_eta[i] = f_eta[i];
-      // 	photon_phi[i] = f_phi[i];
-      // 	photon_cc4[i] = cc4[i];
-      // 	photon_cr4[i] = cr4[i];
-      // 	photon_ct4PtCut20[i] = ct4PtCut20[i];
-      // 	photon_trkSumPtHollowConeDR04[i] = trkSumPtHollowConeDR04[i];
-      // 	photon_hcalTowerSumEtConeDR04[i] = hcalTowerSumEtConeDR04[i];
-      // 	photon_ecalRecHitSumEtConeDR04[i] = ecalRecHitSumEtConeDR04[i];
-      // 	photon_hadronicOverEm[i] = hadronicOverEm[i];
-      // 	photon_sigmaIetaIeta[i] = sigmaIetaIeta[i];
-      // 	photon_isEle[i] = isEle[i];
-      // 	photon_sigmaIphiIphi[i] = sigmaIphiIphi[i];
-      // 	photon_swissCrx[i] = swissCrx[i];
-      // 	photon_seedTime[i] = seedTime[i];
-      // }
-
-      if(montecarlo)
-      {
-	nGenJet = num_gen;
-	for(int i = 0; i < num_gen; i++)
-	{
-	  genJet_pt[i] = genpt[i];
-	  genJet_eta[i] = geneta[i];
-	  genJet_phi[i] = genphi[i];
-	}
-
-	// nGen = num_gen;
-	// for(int i = 0; i < num_gen; i++)
-	// {
-	//   gen_pt[i] = genpt[i];
-	//   gen_eta[i] = geneta[i];
-	//   //gen_phi[i] = genphi[i];
-	//   gen_iso[i] = genIso[i];
-	//   gen_id[i] = genId[i];
-	//   gen_momId[i] = genMomId[i];
-
-	// }
-      }
-
-      fSkimTree->GetEntry(j);
-      goodEvent = false;
-      if((pcollisionEventSelection == 1) && (montecarlo || (pHBHENoiseFilter == 1)) && (TMath::Abs(vz) < 15))
-      {
-	goodEvent = true;
-      }
-
-      outTree->Fill();
+      //l1Jet_hwIso[i] = l1_hwIso[i];
     }
+
+    f1Tree->GetEntry(j);
+    // f2Tree->GetEntry(j);
+    //fTree->GetEntry(j);
+
+    nPuJet = f_num;
+    for(int i = 0; i < f_num; i++)
+    {
+      PuJet_pt[i] = f_pt[i];
+      PuJet_rawpt[i] = f_rawpt[i];
+      PuJet_eta[i] = f_eta[i];
+      PuJet_phi[i] = f_phi[i];
+    }
+
+    // nVsJet = f2_num;
+    // for(int i = 0; i < f2_num; i++)
+    // {
+    // 	VsJet_pt[i] = f2_pt[i];
+    // 	VsJet_rawpt[i] = f2_rawpt[i];
+    // 	VsJet_eta[i] = f2_eta[i];
+    // 	VsJet_phi[i] = f2_phi[i];
+    // }
+    // nPhoton = f_num;
+    // for(int i = 0; i < f_num; i++)
+    // {
+    // 	photon_pt[i] = f_pt[i];
+    // 	photon_eta[i] = f_eta[i];
+    // 	photon_phi[i] = f_phi[i];
+    // 	photon_cc4[i] = cc4[i];
+    // 	photon_cr4[i] = cr4[i];
+    // 	photon_ct4PtCut20[i] = ct4PtCut20[i];
+    // 	photon_trkSumPtHollowConeDR04[i] = trkSumPtHollowConeDR04[i];
+    // 	photon_hcalTowerSumEtConeDR04[i] = hcalTowerSumEtConeDR04[i];
+    // 	photon_ecalRecHitSumEtConeDR04[i] = ecalRecHitSumEtConeDR04[i];
+    // 	photon_hadronicOverEm[i] = hadronicOverEm[i];
+    // 	photon_sigmaIetaIeta[i] = sigmaIetaIeta[i];
+    // 	photon_isEle[i] = isEle[i];
+    // 	photon_sigmaIphiIphi[i] = sigmaIphiIphi[i];
+    // 	photon_swissCrx[i] = swissCrx[i];
+    // 	photon_seedTime[i] = seedTime[i];
+    // }
+
+    if(montecarlo)
+    {
+      nGenJet = num_gen;
+      for(int i = 0; i < num_gen; i++)
+      {
+	genJet_pt[i] = genpt[i];
+	genJet_eta[i] = geneta[i];
+	genJet_phi[i] = genphi[i];
+      }
+
+      // nGen = num_gen;
+      // for(int i = 0; i < num_gen; i++)
+      // {
+      //   gen_pt[i] = genpt[i];
+      //   gen_eta[i] = geneta[i];
+      //   //gen_phi[i] = genphi[i];
+      //   gen_iso[i] = genIso[i];
+      //   gen_id[i] = genId[i];
+      //   gen_momId[i] = genMomId[i];
+
+      // }
+    }
+
+    fSkimTree->GetEntry(j);
+    goodEvent = false;
+    if((pcollisionEventSelection == 1) && (montecarlo || (pHBHENoiseFilter == 1)) && (TMath::Abs(vz) < 15))
+    {
+      goodEvent = true;
+    }
+
+    outTree->Fill();
   }
 
   outTree->Write();

@@ -7,30 +7,31 @@
 
 void makePrettyTurnOn()
 {
-  const char *type = "minbias_photon_data";
+  const char *type = "hydjet_276_jets_gen";
   TFile *inFile = TFile::Open(Form("hist_%s.root",type));
 
   const Int_t THRESHOLDS = 4;
-  const Double_t L1_THRESHOLD[THRESHOLDS] = {2, 5, 8, 12};
+  //const Double_t L1_THRESHOLD[THRESHOLDS] = {2, 5, 12, 20};
+  const Double_t L1_THRESHOLD[THRESHOLDS] = {16, 36, 52, 80};
   const Int_t COLORS[THRESHOLDS] = {kBlack, kRed, kBlue, kGreen+3};//, kMagenta+3};
-  const char* LABELS[2] = {"central", "periph"};
-  TGraphAsymmErrors *asymm[THRESHOLDS][2];
+  //const char* LABELS[2] = {"central", "periph"};
+  TGraphAsymmErrors *asymm[THRESHOLDS];//[2];
 
   for(int i = 0; i < THRESHOLDS; i++)
   {
-    for(int j = 0; j < 2; j++)
+    //for(int j = 0; j < 2; j++)
     {
-      asymm[i][j] = (TGraphAsymmErrors*)inFile->Get(Form("asymm_pt_%d_%d",(int)L1_THRESHOLD[i],j+1));
-      asymm[i][j]->SetMarkerColor(COLORS[i]);
-      asymm[i][j]->SetLineColor(COLORS[i]);
+      asymm[i] = (TGraphAsymmErrors*)inFile->Get(Form("asymm_pt_%d_0",(int)L1_THRESHOLD[i]));
+      asymm[i]->SetMarkerColor(COLORS[i]);
+      asymm[i]->SetLineColor(COLORS[i]);
     }
-    asymm[i][1]->SetMarkerStyle(25);
+    //asymm[i][1]->SetMarkerStyle(25);
   }
 
-  const int nBins = 100;
-  const double maxPt = 100;
+  const int nBins = 75;
+  const double maxPt = 300;
 
-  TH1D *hEmpty = new TH1D("hEmpty",Form(";Offline Photon p_{T} (GeV);Efficiency"),nBins,0,maxPt);
+  TH1D *hEmpty = new TH1D("hEmpty",Form(";Gen Jet p_{T} (GeV);Efficiency"),nBins,0,maxPt);
 
   TCanvas *c1 = new TCanvas();
   hEmpty->SetMinimum(0);
@@ -43,9 +44,9 @@ void makePrettyTurnOn()
 
   for(int i = 0; i < THRESHOLDS; i++)
   {
-    for(int j = 0; j < 2; j++)
+    //for(int j = 0; j < 2; j++)
     {
-      asymm[i][j]->Draw("p");
+      asymm[i]->Draw("p");
     }
   }
 
@@ -56,9 +57,9 @@ void makePrettyTurnOn()
 
   for(int i = 0; i < THRESHOLDS; i++)
   {
-    for(int j = 0; j < 2; j++)
+    //for(int j = 0; j < 2; j++)
     {
-      leg->AddEntry(asymm[i][j], Form("Upgrade RCT %d, %s", (int)L1_THRESHOLD[i], LABELS[j]), "lp");
+      leg->AddEntry(asymm[i], Form("L1_SingleJet%d", (int)L1_THRESHOLD[i]), "lp");
     }
   }
 
